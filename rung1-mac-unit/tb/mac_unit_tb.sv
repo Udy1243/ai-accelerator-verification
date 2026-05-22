@@ -56,7 +56,14 @@ initial begin
     repeat(16) send(2, 3);
     check(96, "16x accumulation");
 
-    $display("\nAll tests done.");
+    
+
+    // Test 6: overflow check - 128 accumulations of 127*127 = 2,064,512
+        clear = 1; @(posedge clk); #1; clear = 0;
+        repeat(128) send(127, 127);
+        check(2064512, "overflow check");
+
+        $display("\nAll tests done.");
     $finish;
 end
 
