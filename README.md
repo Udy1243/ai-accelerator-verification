@@ -70,3 +70,78 @@ project building toward a GEAR-inspired outlier-aware INT4
 quantizer with a full UVM testbench and OpenLane synthesis on 
 SKY130. The MAC unit is the compute primitive that all subsequent 
 rungs build on top of.
+
+# Rung 2 — Parameterized INT4/INT8 Quantizer
+
+A synthesizable quantizer in SystemVerilog that compresses 
+16-bit signed integers to INT4 or INT8, verified with directed 
+tests and 1,000 constrained-random vectors against a Python 
+co-simulation reference model, and synthesized through the full 
+RTL-to-GDS flow on SKY130 via OpenLane.
+
+## What it does
+
+Takes a 16-bit signed input and a scale factor, multiplies them, 
+applies configurable rounding (truncation or round-to-nearest), 
+saturates the result to the output range, and outputs a compressed 
+integer. This is the compression step that reduces neural network 
+weight storage from 16-bit to 4-bit or 8-bit.
+
+## Design
+
+| Signal      | Direction | Width        | Description                        |
+|-------------|-----------|--------------|-------------------------------------|
+| clk         | input     | 1            | Clock                               |
+| rst_n       | input     | 1            | Active-low reset                    |
+| valid_in    | input     | 1            | Input data valid                    |
+| data_in     | input     | INPUT_WIDTH  | Raw value to quantize (signed)      |
+| scale       | input     | 8            | Scale factor (unsigned)             |
+| round_mode  | input     | 1            | 0=truncate, 1=round-to-nearest      |
+| data_out    | output    | OUTPUT_WIDTH | Quantized result (signed)           |
+| overflow    | output    | 1            | High if saturation occurred         |
+| valid_out   | output    | 1            | Output valid                        |
+
+## Pipeline stages
+## Verification
+
+| Test | Description | Expected |
+|------|-------------|----------|
+| 1 | Normal: 5×3, truncate | 15, no overflow |
+| 2 | Saturation: 32767×255 | 127, overflow=1 |
+| 3 | Negative: -30×3 | -90, no overflow |
+| 4 | Rounding: 10×3, round mode | 31, no overflow |
+| + | 1,000 constrained-random vectors vs Python golden model | 0 failures |
+
+**Co-simulation methodology:** Python reference model generates 
+random test vectors and expected outputs. SV testbench reads 
+golden.txt and compares every output — 700 saturation cases 
+and 300 non-saturating cases for balanced coverage.
+
+## OpenLane SKY130 Results
+
+| Metric | Value |
+|--------|-------|
+| Core area | 33,344 µm² |
+| Logic cells | 830 |
+| Critical path | 7.05 ns |
+| Max frequency | 142 MHz |
+| Target frequency | 40 MHz |
+| Timing slack | +17.95 ns |
+| Total power (typical) | ~0.34 mW |
+| Routing violations | 0 |
+| LVS errors | 0 |
+
+## How to run
+
+```bash
+python3 tb/generate_vectors.py   # generate golden vectors
+make sim                          # simulate + check 1004 vectors
+make synth                        # quick Yosys gate count
+```
+
+## Context
+
+Rung 2 of a four-rung AI accelerator verification project. 
+The quantizer compresses the MAC unit outputs from Rung 1 
+before storage — reducing memory bandwidth by 2-4x while 
+the saturation and rounding logic controls accuracy loss.
