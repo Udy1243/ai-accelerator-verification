@@ -1,0 +1,19 @@
+Design Name: quantizer
+Run Directory: /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.39.51
+----------------------------------------
+
+Magic DRC Summary:
+Source: /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.39.51/reports/signoff/drc.rpt
+Total Magic DRC violations is 0
+----------------------------------------
+
+LVS Summary:
+Source: /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.39.51/logs/signoff/39-quantizer.lef.lvs.log
+Number of nets: 952                        |Number of nets: 952                        
+Design is LVS clean.
+----------------------------------------
+
+Antenna Summary:
+Source: /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.39.51/logs/signoff/41-arc.log
+Pin violations: 1
+Net violations: 1

@@ -1,0 +1,6 @@
+<< properties >>
+string FIXED_BBOX 0 0 40000 40000
+string GDS_END 2914428
+string GDS_FILE /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.44.45/results/signoff/quantizer.magic.gds
+string GDS_START 572866
+<< end >>

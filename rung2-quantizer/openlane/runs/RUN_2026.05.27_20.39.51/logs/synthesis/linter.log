@@ -1,0 +1,10 @@
+%Warning-EOFNEWLINE: /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/../rtl/quantizer.sv:63:14: Missing newline at end of file (POSIX 3.206).
+                                                                                                                        : ... Suggest add newline.
+   63 |     endmodule
+      |              ^
+                     ... For warning description see https://verilator.org/warn/EOFNEWLINE?v=5.009
+                     ... Use "/* verilator lint_off EOFNEWLINE */" and lint_on around source to disable this message.
+%Warning-UNUSEDSIGNAL: /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/../rtl/quantizer.sv:22:25: Bits of signal are not used: 'saturated'[23:8]
+                                                                                                                          : ... In instance quantizer
+   22 |     logic signed [23:0] saturated;
+      |                         ^~~~~~~~~

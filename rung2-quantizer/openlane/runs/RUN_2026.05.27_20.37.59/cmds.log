@@ -1,0 +1,50 @@
+Wed May 27 20:37:59 UTC 2026 - Executing "openroad -exit -no_init -python /openlane/scripts/odbpy/lefutil.py get_metal_layers -o /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/layers.list /home/ugunt/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__nom.tlef"
+
+Wed May 27 20:37:59 UTC 2026 - Executing "/openlane/scripts/mergeLef.py -o /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/merged.nom.lef -i /home/ugunt/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__nom.tlef {/home/ugunt/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef /home/ugunt/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_ef_sc_hd.lef} |& tee /dev/null"
+
+Wed May 27 20:37:59 UTC 2026 - Executing "/openlane/scripts/mergeLef.py -o /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/merged.min.lef -i /home/ugunt/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__min.tlef {/home/ugunt/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef /home/ugunt/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_ef_sc_hd.lef} |& tee /dev/null"
+
+Wed May 27 20:37:59 UTC 2026 - Executing "/openlane/scripts/mergeLef.py -o /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/merged.max.lef -i /home/ugunt/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__max.tlef {/home/ugunt/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef /home/ugunt/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_ef_sc_hd.lef} |& tee /dev/null"
+
+Wed May 27 20:38:00 UTC 2026 - Executing "python3 /openlane/scripts/mergeLib.py --output /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/synthesis/merged.lib --name sky130A_merged /home/ugunt/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib"
+
+Wed May 27 20:38:00 UTC 2026 - Executing "python3 /openlane/scripts/libtrim.py --cell-file /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/synthesis/trimmed.lib.exclude.list --output /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/synthesis/trimmed.lib /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/synthesis/merged.lib"
+
+Wed May 27 20:38:00 UTC 2026 - Executing "python3 /openlane/scripts/libtrim.py --cell-file /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/cts/cts.lib.exclude.list --output /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/cts/cts.lib /home/ugunt/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib"
+
+Wed May 27 20:38:01 UTC 2026 - Executing "python3 /openlane/scripts/libtrim.py --cell-file /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/cts/cts-fastest.lib.exclude.list --output /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/cts/cts-fastest.lib /home/ugunt/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_n40C_1v95.lib"
+
+Wed May 27 20:38:01 UTC 2026 - Executing "python3 /openlane/scripts/libtrim.py --cell-file /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/cts/cts-slowest.lib.exclude.list --output /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/cts/cts-slowest.lib /home/ugunt/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_100C_1v60.lib"
+
+Wed May 27 20:38:02 UTC 2026 - Executing "python3 /openlane/scripts/new_tracks.py -i /home/ugunt/.ciel/sky130A/libs.tech/openlane/sky130_fd_sc_hd/tracks.info -o /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/routing/config.tracks"
+
+Wed May 27 20:38:02 UTC 2026 - Executing "echo {OpenLane ff5509f65b17bfa4068d5336495ab1718987ff69} > /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/OPENLANE_COMMIT"
+
+Wed May 27 20:38:02 UTC 2026 - Executing "bash -c {verilator  --lint-only  -Wall  --Wno-DECLFILENAME  --top-module quantizer  /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/../rtl/quantizer.sv -Wno-fatal --relative-includes |& tee /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/logs/synthesis/linter.log /dev/null}"
+
+Wed May 27 20:38:02 UTC 2026 - Executing "sed -E {s/^([[:space:]]+)pg_pin(.*)/\1pin\2\n\1    direction : "inout";/g} /home/ugunt/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib > /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/synthesis/1-sky130_fd_sc_hd__tt_025C_1v80.no_pg.lib"
+
+Wed May 27 20:38:02 UTC 2026 - Executing "sed -E {s/^([[:space:]]+)pg_pin(.*)/\1pin\2\n\1    direction : "inout";/g} /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/synthesis/trimmed.lib > /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/synthesis/1-trimmed.no_pg.lib"
+
+Wed May 27 20:38:02 UTC 2026 - Executing "yosys -c /openlane/scripts/yosys/synth.tcl |& tee /dev/null /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/logs/synthesis/1-synthesis.log"
+
+Wed May 27 20:38:06 UTC 2026 - Executing "sed -i.bak -e {s/\(set ::env(CURRENT_NETLIST)\).*/\1 \/home\/ugunt\/projects\/ai-accelerator-verification\/rung2-quantizer\/openlane\/runs\/RUN_2026.05.27_20.37.59\/results\/synthesis\/quantizer.v/} /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/config.tcl"
+
+Wed May 27 20:38:06 UTC 2026 - Executing "sed -i.bak /defparam/d /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/results/synthesis/quantizer.v"
+
+Wed May 27 20:38:07 UTC 2026 - Executing "sta -exit -no_init /openlane/scripts/openroad/sta/multi_corner.tcl |& tee /dev/null /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/logs/synthesis/2-sta.log"
+
+Wed May 27 20:38:07 UTC 2026 - Executing "openroad -exit /openlane/scripts/openroad/floorplan.tcl |& tee /dev/null /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/logs/floorplan/3-initial_fp.log"
+
+Wed May 27 20:38:08 UTC 2026 - Executing "openroad -exit -no_init -python /openlane/scripts/odbpy/snap_to_grid.py --output /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/floorplan/3-minimized_pdn.txt --input-lef /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/merged.nom.lef 13.685 13.600000000000001 27.37 27.200000000000003"
+
+Wed May 27 20:38:08 UTC 2026 - Executing "openroad -exit -no_init -python /openlane/scripts/odbpy/defutil.py extract_core_dims --output-data /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/dimensions.txt --input-lef /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/merged.nom.lef /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/tmp/floorplan/3-initial_fp.def"
+
+Wed May 27 20:38:09 UTC 2026 - Executing "openroad -exit /openlane/scripts/openroad/ioplacer.tcl |& tee /dev/null /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/logs/floorplan/4-io.log"
+
+Wed May 27 20:38:09 UTC 2026 - Executing "openroad -exit /openlane/scripts/openroad/tapcell.tcl |& tee /dev/null /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/logs/floorplan/5-tap.log"
+
+Wed May 27 20:38:10 UTC 2026 - Executing "openroad -exit /openlane/scripts/openroad/pdn.tcl |& tee /dev/null /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/logs/floorplan/6-pdn.log"
+
+Wed May 27 20:38:11 UTC 2026 - Executing "openroad -exit /openlane/scripts/openroad/gpl.tcl |& tee /dev/null /home/ugunt/projects/ai-accelerator-verification/rung2-quantizer/openlane/runs/RUN_2026.05.27_20.37.59/logs/placement/7-global.log"
+

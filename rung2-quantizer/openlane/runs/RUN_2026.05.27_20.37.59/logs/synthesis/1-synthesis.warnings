@@ -1,0 +1,12 @@
+ABC: Warning: Detected 2 multi-output gates (for example, "sky130_fd_sc_hd__fa_1").
+Warning: Wire quantizer.\valid_out is used but has no driver.
+Warning: Wire quantizer.\overflow is used but has no driver.
+Warning: Wire quantizer.\data_out [7] is used but has no driver.
+Warning: Wire quantizer.\data_out [6] is used but has no driver.
+Warning: Wire quantizer.\data_out [5] is used but has no driver.
+Warning: Wire quantizer.\data_out [4] is used but has no driver.
+Warning: Wire quantizer.\data_out [3] is used but has no driver.
+Warning: Wire quantizer.\data_out [2] is used but has no driver.
+Warning: Wire quantizer.\data_out [1] is used but has no driver.
+Warning: Wire quantizer.\data_out [0] is used but has no driver.
+Warnings: 10 unique messages, 10 total

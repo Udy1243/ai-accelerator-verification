@@ -29,6 +29,28 @@ task automatic check(input signed [7:0] expected, input expected_overflow, input
         $display("PASS [%s]: data_out = %0d", label, data_out);
 endtask
 
+class quant_stimulus;
+    rand logic signed [15:0] data_in_r;
+    rand logic [7:0]         scale_r;
+    rand logic               round_mode_r;
+
+    // keep scale non-zero
+    constraint valid_scale { scale_r > 0; }
+
+    // mix of small values (no overflow) and large values (overflow)
+    constraint data_distribution {
+        data_in_r dist { [-127:127]    := 30,
+                         [-32768:-128] := 35,
+                         [128:32767]   := 35 };
+    }
+
+    // scale stays small when data is small to avoid always saturating
+    constraint scale_range {
+        if (data_in_r inside {[-127:127]})
+            scale_r inside {[1:10]};
+    }
+endclass
+
 initial begin
     $dumpfile("sim/waves.vcd");
     $dumpvars(0, quantizer_tb);

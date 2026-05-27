@@ -1,0 +1,25 @@
+
+47. Printing statistics.
+
+=== quantizer ===
+
+   Number of wires:               1003
+   Number of wire bits:           1039
+   Number of public wires:          10
+   Number of public wire bits:      46
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:               1011
+     $_ANDNOT_                     273
+     $_AND_                        164
+     $_DFFE_PN0P_                    9
+     $_MUX_                         23
+     $_NAND_                        30
+     $_NOR_                         46
+     $_NOT_                         31
+     $_ORNOT_                       58
+     $_OR_                          85
+     $_XNOR_                       113
+     $_XOR_                        179
+
