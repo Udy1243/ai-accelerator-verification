@@ -1,0 +1,890 @@
+$date
+	Thu Jun  4 15:19:55 2026
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1ps
+$end
+$scope module dot_product_tb $end
+$var wire 1 ! tready $end
+$var wire 1 " accum_valid $end
+$var wire 11 # accum [10:0] $end
+$var parameter 32 $ ACCUM_WIDTH $end
+$var parameter 32 % DATA_WIDTH $end
+$var parameter 32 & VECTOR_LEN $end
+$var reg 1 ' clk $end
+$var reg 1 ( rst_n $end
+$var reg 1 ) tlast $end
+$var reg 1 * tvalid $end
+$scope module dut $end
+$var wire 1 ' clk $end
+$var wire 1 ( rst_n $end
+$var wire 1 ) tlast $end
+$var wire 1 * tvalid $end
+$var wire 1 + valid_in_mac $end
+$var wire 1 ! tready $end
+$var wire 1 , clear_mac $end
+$var parameter 32 - ACCUM_WIDTH $end
+$var parameter 32 . DATA_WIDTH $end
+$var parameter 32 / VECTOR_LEN $end
+$var reg 11 0 accum [10:0] $end
+$var reg 1 " accum_valid $end
+$var reg 2 1 state [1:0] $end
+$scope begin mac_gen[0] $end
+$var parameter 2 2 i $end
+$scope module u_mac $end
+$var wire 4 3 a [3:0] $end
+$var wire 8 4 accum_out [7:0] $end
+$var wire 4 5 b [3:0] $end
+$var wire 1 , clear $end
+$var wire 1 ' clk $end
+$var wire 1 ( rst_n $end
+$var wire 1 + valid_in $end
+$var wire 8 6 product [7:0] $end
+$var parameter 32 7 ACCUM_WIDTH $end
+$var parameter 32 8 INPUT_WIDTH $end
+$var reg 8 9 accum_reg [7:0] $end
+$var reg 1 : valid_out $end
+$upscope $end
+$upscope $end
+$scope begin mac_gen[1] $end
+$var parameter 2 ; i $end
+$scope module u_mac $end
+$var wire 4 < a [3:0] $end
+$var wire 8 = accum_out [7:0] $end
+$var wire 4 > b [3:0] $end
+$var wire 1 , clear $end
+$var wire 1 ' clk $end
+$var wire 1 ( rst_n $end
+$var wire 1 + valid_in $end
+$var wire 8 ? product [7:0] $end
+$var parameter 32 @ ACCUM_WIDTH $end
+$var parameter 32 A INPUT_WIDTH $end
+$var reg 8 B accum_reg [7:0] $end
+$var reg 1 C valid_out $end
+$upscope $end
+$upscope $end
+$scope begin mac_gen[2] $end
+$var parameter 3 D i $end
+$scope module u_mac $end
+$var wire 4 E a [3:0] $end
+$var wire 8 F accum_out [7:0] $end
+$var wire 4 G b [3:0] $end
+$var wire 1 , clear $end
+$var wire 1 ' clk $end
+$var wire 1 ( rst_n $end
+$var wire 1 + valid_in $end
+$var wire 8 H product [7:0] $end
+$var parameter 32 I ACCUM_WIDTH $end
+$var parameter 32 J INPUT_WIDTH $end
+$var reg 8 K accum_reg [7:0] $end
+$var reg 1 L valid_out $end
+$upscope $end
+$upscope $end
+$scope begin mac_gen[3] $end
+$var parameter 3 M i $end
+$scope module u_mac $end
+$var wire 4 N a [3:0] $end
+$var wire 8 O accum_out [7:0] $end
+$var wire 4 P b [3:0] $end
+$var wire 1 , clear $end
+$var wire 1 ' clk $end
+$var wire 1 ( rst_n $end
+$var wire 1 + valid_in $end
+$var wire 8 Q product [7:0] $end
+$var parameter 32 R ACCUM_WIDTH $end
+$var parameter 32 S INPUT_WIDTH $end
+$var reg 8 T accum_reg [7:0] $end
+$var reg 1 U valid_out $end
+$upscope $end
+$upscope $end
+$scope begin mac_gen[4] $end
+$var parameter 4 V i $end
+$scope module u_mac $end
+$var wire 4 W a [3:0] $end
+$var wire 8 X accum_out [7:0] $end
+$var wire 4 Y b [3:0] $end
+$var wire 1 , clear $end
+$var wire 1 ' clk $end
+$var wire 1 ( rst_n $end
+$var wire 1 + valid_in $end
+$var wire 8 Z product [7:0] $end
+$var parameter 32 [ ACCUM_WIDTH $end
+$var parameter 32 \ INPUT_WIDTH $end
+$var reg 8 ] accum_reg [7:0] $end
+$var reg 1 ^ valid_out $end
+$upscope $end
+$upscope $end
+$scope begin mac_gen[5] $end
+$var parameter 4 _ i $end
+$scope module u_mac $end
+$var wire 4 ` a [3:0] $end
+$var wire 8 a accum_out [7:0] $end
+$var wire 4 b b [3:0] $end
+$var wire 1 , clear $end
+$var wire 1 ' clk $end
+$var wire 1 ( rst_n $end
+$var wire 1 + valid_in $end
+$var wire 8 c product [7:0] $end
+$var parameter 32 d ACCUM_WIDTH $end
+$var parameter 32 e INPUT_WIDTH $end
+$var reg 8 f accum_reg [7:0] $end
+$var reg 1 g valid_out $end
+$upscope $end
+$upscope $end
+$scope begin mac_gen[6] $end
+$var parameter 4 h i $end
+$scope module u_mac $end
+$var wire 4 i a [3:0] $end
+$var wire 8 j accum_out [7:0] $end
+$var wire 4 k b [3:0] $end
+$var wire 1 , clear $end
+$var wire 1 ' clk $end
+$var wire 1 ( rst_n $end
+$var wire 1 + valid_in $end
+$var wire 8 l product [7:0] $end
+$var parameter 32 m ACCUM_WIDTH $end
+$var parameter 32 n INPUT_WIDTH $end
+$var reg 8 o accum_reg [7:0] $end
+$var reg 1 p valid_out $end
+$upscope $end
+$upscope $end
+$scope begin mac_gen[7] $end
+$var parameter 4 q i $end
+$scope module u_mac $end
+$var wire 4 r a [3:0] $end
+$var wire 8 s accum_out [7:0] $end
+$var wire 4 t b [3:0] $end
+$var wire 1 , clear $end
+$var wire 1 ' clk $end
+$var wire 1 ( rst_n $end
+$var wire 1 + valid_in $end
+$var wire 8 u product [7:0] $end
+$var parameter 32 v ACCUM_WIDTH $end
+$var parameter 32 w INPUT_WIDTH $end
+$var reg 8 x accum_reg [7:0] $end
+$var reg 1 y valid_out $end
+$upscope $end
+$upscope $end
+$scope begin $ivl_for_loop0 $end
+$var integer 32 z j [31:0] $end
+$upscope $end
+$upscope $end
+$scope begin $ivl_for_loop1 $end
+$var integer 32 { i [31:0] $end
+$upscope $end
+$scope begin $ivl_foreach0 $end
+$var integer 32 | i [31:0] $end
+$upscope $end
+$scope begin $ivl_foreach1 $end
+$var integer 32 } i [31:0] $end
+$upscope $end
+$scope begin $ivl_foreach10 $end
+$var integer 32 ~ i [31:0] $end
+$upscope $end
+$scope begin $ivl_foreach11 $end
+$var integer 32 !" i [31:0] $end
+$upscope $end
+$scope begin $ivl_foreach12 $end
+$var integer 32 "" i [31:0] $end
+$upscope $end
+$scope begin $ivl_foreach13 $end
+$var integer 32 #" i [31:0] $end
+$upscope $end
+$scope begin $ivl_foreach14 $end
+$var integer 32 $" i [31:0] $end
+$upscope $end
+$scope begin $ivl_foreach2 $end
+$var integer 32 %" i [31:0] $end
+$upscope $end
+$scope begin $ivl_foreach3 $end
+$var integer 32 &" i [31:0] $end
+$upscope $end
+$scope begin $ivl_foreach4 $end
+$var integer 32 '" i [31:0] $end
+$upscope $end
+$scope begin $ivl_foreach5 $end
+$var integer 32 (" i [31:0] $end
+$upscope $end
+$scope begin $ivl_foreach6 $end
+$var integer 32 )" i [31:0] $end
+$upscope $end
+$scope begin $ivl_foreach7 $end
+$var integer 32 *" i [31:0] $end
+$upscope $end
+$scope begin $ivl_foreach8 $end
+$var integer 32 +" i [31:0] $end
+$upscope $end
+$scope begin $ivl_foreach9 $end
+$var integer 32 ," i [31:0] $end
+$upscope $end
+$scope task check $end
+$upscope $end
+$scope task send $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+$comment Show the parameter values. $end
+$dumpall
+b100 w
+b1000 v
+b111 q
+b100 n
+b1000 m
+b110 h
+b100 e
+b1000 d
+b101 _
+b100 \
+b1000 [
+b100 V
+b100 S
+b1000 R
+b11 M
+b100 J
+b1000 I
+b10 D
+b100 A
+b1000 @
+b1 ;
+b100 8
+b1000 7
+b0 2
+b1000 /
+b100 .
+b1011 -
+b1000 &
+b100 %
+b1011 $
+$end
+#0
+$dumpvars
+b0 ,"
+b0 +"
+b0 *"
+b0 )"
+b0 ("
+b0 '"
+b0 &"
+b0 %"
+b0 $"
+b0 #"
+b0 ""
+b0 !"
+b0 ~
+b1000 }
+b1000 |
+b0 {
+b1000 z
+0y
+b0 x
+b0 u
+b0 t
+b0 s
+b0 r
+0p
+b0 o
+b0 l
+b0 k
+b0 j
+b0 i
+0g
+b0 f
+b0 c
+b0 b
+b0 a
+b0 `
+0^
+b0 ]
+b0 Z
+b0 Y
+b0 X
+b0 W
+0U
+b0 T
+b0 Q
+b0 P
+b0 O
+b0 N
+0L
+b0 K
+b0 H
+b0 G
+b0 F
+b0 E
+0C
+b0 B
+b0 ?
+b0 >
+b0 =
+b0 <
+0:
+b0 9
+b0 6
+b0 5
+b0 4
+b0 3
+b0 1
+b0 0
+1,
+0+
+0*
+0)
+0(
+0'
+b0 #
+0"
+1!
+$end
+#5000
+1'
+#10000
+0'
+#15000
+1(
+1'
+#20000
+0'
+#25000
+1'
+#26000
+1)
+1*
+b1000 &"
+b1000 %"
+#30000
+0'
+#35000
+0!
+0,
+1+
+b1 1
+1'
+#36000
+0*
+#40000
+0'
+#45000
+1"
+0+
+b10 1
+1y
+1p
+1g
+1^
+1U
+1L
+1C
+1:
+1'
+#46000
+1*
+b1 6
+b1 5
+b1 3
+b1000 ("
+b1000 '"
+#50000
+0'
+#55000
+1!
+1,
+b0 1
+1'
+#60000
+0'
+#65000
+0!
+0,
+1+
+b1 1
+0"
+0y
+0p
+0g
+0^
+0U
+0L
+0C
+0:
+1'
+#66000
+0*
+#70000
+0'
+#75000
+b1 #
+b1 0
+b1000 z
+1:
+b1 4
+b1 9
+1C
+1L
+1U
+1^
+1g
+1p
+1y
+1"
+0+
+b10 1
+1'
+#76000
+1*
+b1 u
+b1 t
+b1 r
+b1000 *"
+b0 5
+b1000 )"
+b0 6
+b0 3
+#80000
+0'
+#85000
+1!
+1,
+b0 1
+1'
+#90000
+0'
+#95000
+b1000 z
+b0 #
+b0 0
+0:
+b0 4
+b0 9
+0C
+0L
+0U
+0^
+0g
+0p
+0y
+0!
+0,
+1+
+b1 1
+0"
+1'
+#96000
+0*
+#100000
+0'
+#105000
+b1 #
+b1 0
+b1000 z
+1"
+0+
+b10 1
+1y
+b1 s
+b1 x
+1p
+1g
+1^
+1U
+1L
+1C
+1:
+1'
+#106000
+1*
+b111 t
+b110001 l
+b111 k
+b110001 c
+b111 b
+b110001 Z
+b111 Y
+b110001 Q
+b111 P
+b110001 H
+b111 G
+b110001 ?
+b111 >
+b1000 ,"
+b110001 6
+b111 5
+b110001 u
+b111 r
+b111 i
+b111 `
+b111 W
+b111 N
+b111 E
+b111 <
+b1000 +"
+b111 3
+#110000
+0'
+#115000
+1!
+1,
+b0 1
+1'
+#120000
+0'
+#125000
+b1000 z
+b0 #
+b0 0
+0!
+0,
+1+
+b1 1
+0"
+0y
+b0 s
+b0 x
+0p
+0g
+0^
+0U
+0L
+0C
+0:
+1'
+#126000
+0*
+#130000
+0'
+#135000
+b110001000 #
+b110001000 0
+b1000 z
+1:
+b110001 4
+b110001 9
+1C
+b110001 =
+b110001 B
+1L
+b110001 F
+b110001 K
+1U
+b110001 O
+b110001 T
+1^
+b110001 X
+b110001 ]
+1g
+b110001 a
+b110001 f
+1p
+b110001 j
+b110001 o
+1y
+b110001 s
+b110001 x
+1"
+0+
+b10 1
+1'
+#136000
+1*
+b1000 !"
+b11001000 u
+b1000 r
+b11001000 l
+b1000 i
+b11001000 c
+b1000 `
+b11001000 Z
+b1000 W
+b11001000 Q
+b1000 N
+b11001000 H
+b1000 E
+b11001000 ?
+b1000 <
+b1000 ~
+b11001000 6
+b1000 3
+#140000
+0'
+#145000
+1!
+1,
+b0 1
+1'
+#150000
+0'
+#155000
+b1000 z
+b0 #
+b0 0
+0:
+b0 4
+b0 9
+0C
+b0 =
+b0 B
+0L
+b0 F
+b0 K
+0U
+b0 O
+b0 T
+0^
+b0 X
+b0 ]
+0g
+b0 a
+b0 f
+0p
+b0 j
+b0 o
+0y
+b0 s
+b0 x
+0!
+0,
+1+
+b1 1
+0"
+1'
+#156000
+0*
+#160000
+0'
+#165000
+b11001000000 #
+b11001000000 0
+b1000 z
+1"
+0+
+b10 1
+1y
+b11001000 s
+b11001000 x
+1p
+b11001000 j
+b11001000 o
+1g
+b11001000 a
+b11001000 f
+1^
+b11001000 X
+b11001000 ]
+1U
+b11001000 O
+b11001000 T
+1L
+b11001000 F
+b11001000 K
+1C
+b11001000 =
+b11001000 B
+1:
+b11001000 4
+b11001000 9
+1'
+#166000
+1*
+b1000000 u
+b1000 t
+b1000000 l
+b1000 k
+b1000000 c
+b1000 b
+b1000000 Z
+b1000 Y
+b1000000 Q
+b1000 P
+b1000000 H
+b1000 G
+b1000000 ?
+b1000 >
+b1000 #"
+b1000000 6
+b1000 5
+b1000 ""
+#170000
+0'
+#175000
+1!
+1,
+b0 1
+1'
+#180000
+0'
+#185000
+b1000 z
+b0 #
+b0 0
+0!
+0,
+1+
+b1 1
+0"
+0y
+b0 s
+b0 x
+0p
+b0 j
+b0 o
+0g
+b0 a
+b0 f
+0^
+b0 X
+b0 ]
+0U
+b0 O
+b0 T
+0L
+b0 F
+b0 K
+0C
+b0 =
+b0 B
+0:
+b0 4
+b0 9
+1'
+#186000
+0*
+#190000
+0'
+#195000
+b1000000000 #
+b1000000000 0
+b1000 z
+1:
+b1000000 4
+b1000000 9
+1C
+b1000000 =
+b1000000 B
+1L
+b1000000 F
+b1000000 K
+1U
+b1000000 O
+b1000000 T
+1^
+b1000000 X
+b1000000 ]
+1g
+b1000000 a
+b1000000 f
+1p
+b1000000 j
+b1000000 o
+1y
+b1000000 s
+b1000000 x
+1"
+0+
+b10 1
+1'
+#196000
+1*
+b11111000 u
+b1 t
+b1 k
+b11111000 c
+b1 b
+b1 Y
+b11111000 Q
+b1 P
+b1 G
+b11111000 ?
+b1 >
+b1000 $"
+b1 5
+b111 l
+b111 i
+b111 Z
+b111 W
+b111 H
+b111 E
+b1000 {
+b111 6
+b111 3
+#200000
+0'
+#205000
+1!
+1,
+b0 1
+1'
+#210000
+0'
+#215000
+b1000 z
+b0 #
+b0 0
+0:
+b0 4
+b0 9
+0C
+b0 =
+b0 B
+0L
+b0 F
+b0 K
+0U
+b0 O
+b0 T
+0^
+b0 X
+b0 ]
+0g
+b0 a
+b0 f
+0p
+b0 j
+b0 o
+0y
+b0 s
+b0 x
+0!
+0,
+1+
+b1 1
+0"
+1'
+#216000
+0*
+#220000
+0'
+#225000
+b11111111100 #
+b11111111100 0
+b1000 z
+1"
+0+
+b10 1
+1y
+b11111000 s
+b11111000 x
+1p
+b111 j
+b111 o
+1g
+b11111000 a
+b11111000 f
+1^
+b111 X
+b111 ]
+1U
+b11111000 O
+b11111000 T
+1L
+b111 F
+b111 K
+1C
+b11111000 =
+b11111000 B
+1:
+b111 4
+b111 9
+1'
+#226000
