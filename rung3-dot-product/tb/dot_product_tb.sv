@@ -6,8 +6,8 @@ module dot_product_tb;
 
     logic clk;
     logic rst_n;
-    logic signed [DATA_WIDTH-1:0] a [VECTOR_LEN-1:0];
-    logic signed [DATA_WIDTH-1:0] b [VECTOR_LEN-1:0];
+    logic signed [DATA_WIDTH*VECTOR_LEN-1:0] a_flat;
+    logic signed [DATA_WIDTH*VECTOR_LEN-1:0] b_flat;
     logic tvalid;
     logic tlast;
     logic signed [ACCUM_WIDTH-1:0] accum;
@@ -22,6 +22,17 @@ module dot_product_tb;
 
     initial clk = 0;
     always #5 clk = ~clk;
+// helper to pack array into flat signal
+// add this before initial block
+logic signed [DATA_WIDTH-1:0] a [VECTOR_LEN-1:0];
+logic signed [DATA_WIDTH-1:0] b [VECTOR_LEN-1:0];
+
+always_comb begin
+    for (int k = 0; k < VECTOR_LEN; k++) begin
+        a_flat[DATA_WIDTH*(k+1)-1 -: DATA_WIDTH] = a[k];
+        b_flat[DATA_WIDTH*(k+1)-1 -: DATA_WIDTH] = b[k];
+    end
+end
 
   task automatic send();
     tvalid = 1; tlast = 1;

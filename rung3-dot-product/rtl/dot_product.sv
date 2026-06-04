@@ -7,8 +7,8 @@ parameter int ACCUM_WIDTH = 11
 (
     input logic clk,
     input logic rst_n,
-    input logic signed [DATA_WIDTH - 1:0]  a [VECTOR_LEN-1:0],
-    input logic signed [DATA_WIDTH - 1:0]  b [VECTOR_LEN-1:0],
+    input logic signed [DATA_WIDTH*VECTOR_LEN-1:0] a_flat,
+    input logic signed [DATA_WIDTH*VECTOR_LEN-1:0] b_flat,
     input logic tvalid,
     input logic tlast,
     output logic signed [ACCUM_WIDTH - 1 : 0] accum,
@@ -20,6 +20,17 @@ parameter int ACCUM_WIDTH = 11
 
 logic clear_mac;
 logic valid_in_mac;
+
+logic signed [DATA_WIDTH-1:0] a [VECTOR_LEN-1:0];
+logic signed [DATA_WIDTH-1:0] b [VECTOR_LEN-1:0];
+
+genvar k;
+generate
+    for (k = 0; k < VECTOR_LEN; k++) begin
+        assign a[k] = a_flat[DATA_WIDTH*(k+1)-1 : DATA_WIDTH*k];
+        assign b[k] = b_flat[DATA_WIDTH*(k+1)-1 : DATA_WIDTH*k];
+    end
+endgenerate
 
 typedef enum  logic [1:0]{IDLE, COMPUTE, DONE} state_t;
 state_t state;
