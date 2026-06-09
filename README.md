@@ -145,3 +145,212 @@ Rung 2 of a four-rung AI accelerator verification project.
 The quantizer compresses the MAC unit outputs from Rung 1 
 before storage — reducing memory bandwidth by 2-4x while 
 the saturation and rounding logic controls accuracy loss.
+
+# Rung 3 — Dot Product Engine with UVM Verification
+ 
+A pipelined 8-element dot product engine in SystemVerilog, verified
+with a complete UVM testbench running 100 constrained-random transactions
+through a self-checking scoreboard. Synthesized via Yosys with 8 parallel
+MAC unit instances.
+ 
+---
+ 
+## What it does
+ 
+Computes the dot product of two INT4 input vectors of length 8:
+ 
+```
+result = a[0]*b[0] + a[1]*b[1] + ... + a[7]*b[7]
+```
+ 
+This is the core operation inside every neural network layer — each
+neuron's activation is a dot product of its inputs against its weights.
+The engine uses an AXI-Stream interface for data transfer and a
+3-state FSM to sequence the computation.
+ 
+---
+ 
+## Architecture
+ 
+```
+AXI-Stream input
+(tvalid/tready/tlast)
+        │
+        ▼
+  ┌─────────────┐
+  │  FSM        │  IDLE → COMPUTE → DONE
+  │  Controller │  tready high in IDLE
+  └──────┬──────┘
+         │ valid_in / clear
+         ▼
+  ┌──────────────────────────────────────┐
+  │  MAC Array (8 parallel instances)    │
+  │  mac[0] mac[1] mac[2] ... mac[7]     │
+  │  each: INPUT_WIDTH=4, ACCUM_WIDTH=8  │
+  └──────────────┬───────────────────────┘
+                 │ mac_out[0..7]
+                 ▼
+          ┌─────────────┐
+          │ always_comb  │  sum all 8 outputs
+          │  summation   │
+          └──────┬───────┘
+                 │
+                 ▼
+           accum[10:0]  +  accum_valid
+```
+ 
+### FSM states
+ 
+| State | Description |
+|-------|-------------|
+| IDLE | tready=1, clear_mac=1, waiting for tvalid |
+| COMPUTE | valid_in_mac=1, MACs accumulate for one cycle |
+| DONE | accum_valid=1, result stable, returns to IDLE |
+ 
+---
+ 
+## Parameters
+ 
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| VECTOR_LEN | 8 | Number of MAC units |
+| DATA_WIDTH | 4 | Input bit width (INT4) |
+| ACCUM_WIDTH | 11 | Output accumulator width |
+ 
+Accumulator width of 11 bits handles the worst case:
+8 × (7 × 7) = 392 and 8 × ((-8) × (-8)) = 512 — both fit in 11 bits signed.
+ 
+---
+ 
+## Ports
+ 
+| Signal | Direction | Width | Description |
+|--------|-----------|-------|-------------|
+| clk | input | 1 | Clock |
+| rst_n | input | 1 | Active-low reset |
+| a_flat | input | DATA_WIDTH×VECTOR_LEN | Flattened vector A |
+| b_flat | input | DATA_WIDTH×VECTOR_LEN | Flattened vector B |
+| tvalid | input | 1 | AXI-Stream input valid |
+| tlast | input | 1 | AXI-Stream last beat |
+| tready | output | 1 | AXI-Stream ready |
+| accum | output | ACCUM_WIDTH | Dot product result |
+| accum_valid | output | 1 | Result is valid this cycle |
+ 
+Ports use flattened packed vectors (`a_flat`, `b_flat`) for Yosys
+synthesis compatibility. The RTL unpacks them internally via a
+generate block.
+ 
+---
+ 
+## Verification
+ 
+### Directed testbench (7 tests)
+ 
+| Test | Description | Expected |
+|------|-------------|----------|
+| all_zeroes | All inputs zero | 0 |
+| identity_elem_0 | a[0]=1, b[0]=1, rest zero | 1 |
+| identity_elem_7 | a[7]=1, b[7]=1, rest zero | 1 |
+| all_max_pos | All a=7, b=7 | 392 |
+| max_neg_x_max_pos | All a=-8, b=7 | -448 |
+| max_neg_x_max_neg | All a=-8, b=-8 | 512 |
+| alternating_signs | a alternates 7/-8, b=1 | -4 |
+ 
+All 7 directed tests pass.
+ 
+### UVM testbench (100 constrained-random transactions)
+ 
+Full UVM 1.2 environment running on Aldec Riviera-PRO:
+ 
+```
+uvm_sequence
+    generates 100 random transactions
+         │
+         ▼
+uvm_sequencer
+         │
+         ▼
+uvm_driver
+    drives AXI-Stream handshake
+    holds inputs stable until accum_valid
+         │
+         ▼
+    [DUT]
+         │
+         ▼
+uvm_monitor
+    captures inputs + result when accum_valid fires
+         │
+         ▼
+uvm_scoreboard
+    recomputes expected from captured inputs
+    compares against actual output
+```
+ 
+**Results: 100 passed, 0 failed**
+ 
+Key implementation decisions:
+ 
+- Driver waits for `accum_valid` before calling `item_done()` — prevents
+  the driver loading the next transaction's inputs before the monitor
+  captures the current result
+- Monitor captures `a_flat`, `b_flat`, and `accum` atomically when
+  `accum_valid` fires — avoids stale-input mismatches
+- Scoreboard recomputes expected value from captured inputs using the same
+  slicing logic as the DUT — independent verification of the hardware math
+- Clocking blocks with `#1step` input sampling and `#1` output delay
+  eliminate race conditions throughout
+---
+ 
+## Synthesis Results (Yosys)
+ 
+```
+Design hierarchy total:
+  Total cells:    1,598
+  Flip flops:        76
+  XOR gates:        442
+  MAC instances:      8
+ 
+Per MAC unit (INT4, ACCUM_WIDTH=8):
+  Cells:   159
+  FFs:       9
+ 
+Dot product controller:
+  Cells:   334
+  FFs:       4  (2-bit state + accum_valid + 1 misc)
+```
+ 
+**Key insight:** 8 MAC units × 159 cells = 1,272 cells for the compute
+array. The FSM and summation add only 334 cells — the compute logic
+dominates as expected for an arithmetic accelerator.
+ 
+---
+ 
+## How to run
+ 
+```bash
+# Directed testbench (iverilog)
+make sim
+ 
+# Synthesis gate count (Yosys)
+make synth
+ 
+# Waveforms (GTKWave)
+make waves
+```
+ 
+UVM testbench runs on [EDA Playground](https://edaplayground.com) with
+UVM 1.2 and Aldec Riviera-PRO — paste `tb/uvm/testbench.sv` into the
+testbench panel and `rtl/mac_unit.sv` + `rtl/dot_product.sv` into the
+design panel.
+ 
+---
+ 
+## Context
+ 
+Rung 3 of a four-rung AI accelerator verification project. The dot product
+engine builds on the INT8 MAC unit from Rung 1 and feeds into the
+GEAR-inspired outlier quantizer in Rung 4. The UVM environment established
+here — driver, monitor, scoreboard, clocking blocks — scales directly to
+the full UVM testbench in Rung 4.
+ 
