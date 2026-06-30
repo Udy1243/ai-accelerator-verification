@@ -40,7 +40,6 @@ always_ff @(posedge clk or negedge rst_n) begin
         valid_out <= valid_in;
         if (valid_in) begin
             int4_out <= outlier_comp_res ? '0 : post_clip_res;
-            
             sideband_out <= outlier_comp_res ? data_in : '0;
             is_outlier <= outlier_comp_res;
         end
