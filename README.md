@@ -353,4 +353,60 @@ engine builds on the INT8 MAC unit from Rung 1 and feeds into the
 GEAR-inspired outlier quantizer in Rung 4. The UVM environment established
 here — driver, monitor, scoreboard, clocking blocks — scales directly to
 the full UVM testbench in Rung 4.
+
+# Rung 4 — GEAR-Inspired Outlier-Aware INT4 Quantizer
+
+A SystemVerilog quantizer that detects per-value outliers against a
+configurable threshold and routes them to a full-precision INT8 sideband
+path instead of quantizing them to INT4, preserving accuracy on the values
+that matter most.
+
+## What it does
+
+```
+if abs(data_in) > threshold:
+    is_outlier = 1, sideband_out = data_in, int4_out = 0
+else:
+    is_outlier = 0, int4_out = clip(data_in x scale, -8, 7), sideband_out = 0
+```
+
+## Verification
+
+| Test | Description | Expected |
+|------|-------------|----------|
+| 1-6 | Directed: normal quantization, positive/negative outlier, boundary, scale=0, negative normal | 6/6 pass |
+| + | 1,000 random vectors vs Python golden model | 0 failures |
+
+## OpenLane SKY130 Results
+
+| Metric | Value |
+|--------|-------|
+| Core area | 5,780.5 um^2 |
+| Logic cells | 233 |
+| Core utilization | 42.5% |
+| Critical path | 3.88 ns |
+| Max frequency | 257.7 MHz |
+| Target frequency | 40 MHz |
+| Timing slack | +21.12 ns |
+| Total power (typical) | ~0.117 mW |
+| Routing violations | 0 |
+| LVS errors | 0 |
+
+## How to run
+
+```bash
+python3 tb/generate_vectors.py   # generate golden vectors
+make cosim                        # simulate + check 1000 vectors
+make synth                        # quick Yosys gate count
+```
+
+OpenLane SKY130 flow: `cd ~/OpenLane && make mount`, then inside the
+container run `./flow.tcl -design <path-to>/rung4-gear-quantizer/openlane -overwrite`.
+
+## Context
+
+Rung 4 of a four-rung AI accelerator verification project. It closes the
+loop on the GEAR-inspired quantization concept the whole project builds
+toward. Next up: a full UVM testbench with functional coverage on
+EDA Playground, following the Rung 3 template.
  

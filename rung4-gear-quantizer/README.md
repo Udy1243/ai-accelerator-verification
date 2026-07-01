@@ -63,6 +63,27 @@ Number of cells: 329
   $_MUX_:         6   (outlier routing mux)
 ```
 
+### OpenLane SKY130 Results
+
+| Metric | Value |
+|--------|-------|
+| Core area | 5,780.5 µm² |
+| Logic cells | 233 |
+| Core utilization | 42.5% |
+| Critical path | 3.88 ns |
+| Max frequency | 257.7 MHz |
+| Target frequency | 40 MHz |
+| Timing slack | +21.12 ns |
+| Total power (typical) | ~0.117 mW |
+| Routing (DRC) violations | 0 |
+| Antenna violations | 0 |
+| LVS errors | 0 |
+
+Floorplan uses relative sizing (`FP_CORE_UTIL=40`, `PL_TARGET_DENSITY=0.75`) so
+the die scales to the design instead of reusing a fixed area — gear_quantizer
+is roughly a quarter the cell count of the Rung 2 quantizer, so its core area
+is correspondingly smaller rather than artificially matching it.
+
 ## How to Run
 
 ```bash
@@ -77,6 +98,11 @@ make synth
 
 # Open waveforms
 make waves
+
+# OpenLane SKY130 synthesis (from ~/OpenLane, requires Docker)
+cd ~/OpenLane && make mount
+# inside the container:
+./flow.tcl -design /home/ugunt/projects/ai-accelerator-verification/rung4-gear-quantizer/openlane -overwrite
 ```
 
 ## Design Notes

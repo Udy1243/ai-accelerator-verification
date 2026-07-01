@@ -68,3 +68,7 @@ Verification is complete when:
 - All functional coverage bins above have been hit (UVM phase)
 - Yosys synthesis completes with 0 errors
 - OpenLane SKY130 flow completes with 0 DRC/LVS violations
+
+**Status: OpenLane complete.** Flow finished with 0 routing violations,
+0 antenna violations, 0 LVS errors — 233 cells, 5,780.5 µm² core area at
+42.5% utilization, 257.7 MHz max frequency, ~0.117 mW typical power.
