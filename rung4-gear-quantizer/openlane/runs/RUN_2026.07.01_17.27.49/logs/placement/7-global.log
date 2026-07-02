@@ -1,0 +1,127 @@
+OpenROAD 41a51eaf4ca2171c92ff38afb91eb37bbd3f36da 
+This program is licensed under the BSD-3 license. See the LICENSE file for details.
+Components of this program may be licensed under more restrictive licenses which must be honored.
+[INFO]: Reading ODB at '/home/ugunt/projects/ai-accelerator-verification/rung4-gear-quantizer/openlane/runs/RUN_2026.07.01_17.27.49/results/floorplan/gear_quantizer.odb'…
+define_corners Typical
+read_liberty -corner Typical /home/ugunt/.ciel/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib
+Using 1e-12 for capacitance...
+Using 1e+03 for resistance...
+Using 1e-09 for time...
+Using 1e+00 for voltage...
+Using 1e-03 for current...
+Using 1e-09 for power...
+Using 1e-06 for distance...
+Reading design constraints file at '/home/ugunt/projects/ai-accelerator-verification/rung4-gear-quantizer/openlane/runs/RUN_2026.07.01_17.27.49/tmp/floorplan/3-initial_fp.sdc'…
+[INFO]: Setting RC values...
+[INFO]: Setting signal min routing layer to: met1 and clock min routing layer to met3. 
+[INFO]: Setting signal max routing layer to: met5 and clock max routing layer to met5. 
+[INFO GPL-0002] DBU: 1000
+[INFO GPL-0003] SiteSize: 460 2720
+[INFO GPL-0004] CoreAreaLxLy: 5520 10880
+[INFO GPL-0005] CoreAreaUxUy: 194120 187680
+[INFO GPL-0006] NumInstances: 832
+[INFO GPL-0007] NumPlaceInstances: 233
+[INFO GPL-0008] NumFixedInstances: 599
+[INFO GPL-0009] NumDummyInstances: 0
+[INFO GPL-0010] NumNets: 257
+[INFO GPL-0011] NumPins: 920
+[INFO GPL-0012] DieAreaLxLy: 0 0
+[INFO GPL-0013] DieAreaUxUy: 200000 200000
+[INFO GPL-0014] CoreAreaLxLy: 5520 10880
+[INFO GPL-0015] CoreAreaUxUy: 194120 187680
+[INFO GPL-0016] CoreArea: 33344480000
+[INFO GPL-0017] NonPlaceInstsArea: 1074780800
+[INFO GPL-0018] PlaceInstsArea: 2329734400
+[INFO GPL-0019] Util(%): 7.22
+[INFO GPL-0020] StdInstsArea: 2329734400
+[INFO GPL-0021] MacroInstsArea: 0
+[InitialPlace]  Iter: 1 CG residual: 0.00000010 HPWL: 9054410
+[InitialPlace]  Iter: 2 CG residual: 0.00000012 HPWL: 7448189
+[InitialPlace]  Iter: 3 CG residual: 0.00000009 HPWL: 7452962
+[InitialPlace]  Iter: 4 CG residual: 0.00000012 HPWL: 7468182
+[InitialPlace]  Iter: 5 CG residual: 0.00000011 HPWL: 7468034
+[INFO GPL-0031] FillerInit: NumGCells: 2561
+[INFO GPL-0032] FillerInit: NumGNets: 257
+[INFO GPL-0033] FillerInit: NumGPins: 920
+[INFO GPL-0023] TargetDensity: 0.75
+[INFO GPL-0024] AveragePlaceInstArea: 9998860
+[INFO GPL-0025] IdealBinArea: 13331813
+[INFO GPL-0026] IdealBinCnt: 2501
+[INFO GPL-0027] TotalBinArea: 33344480000
+[INFO GPL-0028] BinCnt: 32 32
+[INFO GPL-0029] BinSize: 5894 5525
+[INFO GPL-0030] NumBins: 1024
+[NesterovSolve] Iter: 1 overflow: 0.636211 HPWL: 7239421
+[INFO GPL-0100] worst slack 1.62e-08
+[INFO GPL-0103] Weighted 25 nets.
+[INFO GPL-0100] worst slack 1.62e-08
+[INFO GPL-0103] Weighted 25 nets.
+[NesterovSolve] Snapshot saved at iter = 3
+[NesterovSolve] Iter: 10 overflow: 0.53475 HPWL: 6959066
+[NesterovSolve] Iter: 20 overflow: 0.531607 HPWL: 6993420
+[NesterovSolve] Iter: 30 overflow: 0.52809 HPWL: 6947957
+[NesterovSolve] Iter: 40 overflow: 0.53201 HPWL: 6999147
+[NesterovSolve] Iter: 50 overflow: 0.527589 HPWL: 6919120
+[NesterovSolve] Iter: 60 overflow: 0.52671 HPWL: 6970838
+[NesterovSolve] Iter: 70 overflow: 0.526085 HPWL: 6938727
+[NesterovSolve] Iter: 80 overflow: 0.526281 HPWL: 6943097
+[NesterovSolve] Iter: 90 overflow: 0.517085 HPWL: 6909240
+[NesterovSolve] Iter: 100 overflow: 0.518936 HPWL: 6887103
+[NesterovSolve] Iter: 110 overflow: 0.520018 HPWL: 6919452
+[NesterovSolve] Iter: 120 overflow: 0.516246 HPWL: 6910001
+[NesterovSolve] Iter: 130 overflow: 0.517135 HPWL: 6897041
+[NesterovSolve] Iter: 140 overflow: 0.52175 HPWL: 6922124
+[NesterovSolve] Iter: 150 overflow: 0.52137 HPWL: 6949695
+[NesterovSolve] Iter: 160 overflow: 0.523063 HPWL: 6961461
+[NesterovSolve] Iter: 170 overflow: 0.523403 HPWL: 6980838
+[NesterovSolve] Iter: 180 overflow: 0.520806 HPWL: 6970262
+[NesterovSolve] Iter: 190 overflow: 0.519005 HPWL: 6945789
+[NesterovSolve] Iter: 200 overflow: 0.507922 HPWL: 6954832
+[NesterovSolve] Iter: 210 overflow: 0.498767 HPWL: 6936338
+[NesterovSolve] Iter: 220 overflow: 0.48613 HPWL: 6960622
+[INFO GPL-0100] worst slack 1.62e-08
+[INFO GPL-0103] Weighted 25 nets.
+[NesterovSolve] Iter: 230 overflow: 0.464303 HPWL: 6910610
+[NesterovSolve] Iter: 240 overflow: 0.443405 HPWL: 7048133
+[NesterovSolve] Iter: 250 overflow: 0.415768 HPWL: 7007427
+[NesterovSolve] Iter: 260 overflow: 0.381365 HPWL: 7077966
+[NesterovSolve] Iter: 270 overflow: 0.344718 HPWL: 7120149
+[NesterovSolve] Iter: 280 overflow: 0.318417 HPWL: 7196667
+[NesterovSolve] Iter: 290 overflow: 0.292912 HPWL: 7232463
+[INFO GPL-0100] worst slack 1.62e-08
+[INFO GPL-0103] Weighted 24 nets.
+[NesterovSolve] Iter: 300 overflow: 0.262493 HPWL: 7261663
+[NesterovSolve] Iter: 310 overflow: 0.233656 HPWL: 7307314
+[INFO GPL-0100] worst slack 1.62e-08
+[INFO GPL-0103] Weighted 24 nets.
+[NesterovSolve] Iter: 320 overflow: 0.199512 HPWL: 7333076
+[INFO GPL-0075] Routability numCall: 1 inflationIterCnt: 1 bloatIterCnt: 0
+[INFO GPL-0036] TileLxLy: 0 0
+[INFO GPL-0037] TileSize: 6900 6900
+[INFO GPL-0038] TileCnt: 28 28
+[INFO GPL-0039] numRoutingLayers: 6
+[INFO GPL-0040] NumTiles: 784
+[INFO GPL-0063] TotalRouteOverflowH2: 0.0
+[INFO GPL-0064] TotalRouteOverflowV2: 0.0
+[INFO GPL-0065] OverflowTileCnt2: 0
+[INFO GPL-0066] 0.5%RC: 1.0
+[INFO GPL-0067] 1.0%RC: 0.9636363630945032
+[INFO GPL-0068] 2.0%RC: 0.8767441899277443
+[INFO GPL-0069] 5.0%RC: 0.731603777633523
+[INFO GPL-0070] 0.5rcK: 1.0
+[INFO GPL-0071] 1.0rcK: 1.0
+[INFO GPL-0072] 2.0rcK: 0.0
+[INFO GPL-0073] 5.0rcK: 0.0
+[INFO GPL-0074] FinalRC: 0.9818182
+[NesterovSolve] Iter: 330 overflow: 0.177601 HPWL: 7359579
+[INFO GPL-0100] worst slack 1.62e-08
+[INFO GPL-0103] Weighted 25 nets.
+[NesterovSolve] Iter: 340 overflow: 0.142242 HPWL: 7361583
+[NesterovSolve] Iter: 350 overflow: 0.120053 HPWL: 7372155
+[NesterovSolve] Iter: 360 overflow: 0.100998 HPWL: 7408208
+[NesterovSolve] Finished with Overflow: 0.096373
+Setting global connections for newly added cells…
+Writing OpenROAD database to '/home/ugunt/projects/ai-accelerator-verification/rung4-gear-quantizer/openlane/runs/RUN_2026.07.01_17.27.49/tmp/placement/7-global.odb'…
+Writing netlist to '/home/ugunt/projects/ai-accelerator-verification/rung4-gear-quantizer/openlane/runs/RUN_2026.07.01_17.27.49/tmp/placement/7-global.nl.v'…
+Writing powered netlist to '/home/ugunt/projects/ai-accelerator-verification/rung4-gear-quantizer/openlane/runs/RUN_2026.07.01_17.27.49/tmp/placement/7-global.pnl.v'…
+Writing layout to '/home/ugunt/projects/ai-accelerator-verification/rung4-gear-quantizer/openlane/runs/RUN_2026.07.01_17.27.49/tmp/placement/7-global.def'…

@@ -1,0 +1,6 @@
+<< properties >>
+string FIXED_BBOX 0 0 40000 40000
+string GDS_END 1346258
+string GDS_FILE /home/ugunt/projects/ai-accelerator-verification/rung4-gear-quantizer/openlane/runs/RUN_2026.07.01_17.22.17/results/signoff/gear_quantizer.magic.gds
+string GDS_START 357338
+<< end >>

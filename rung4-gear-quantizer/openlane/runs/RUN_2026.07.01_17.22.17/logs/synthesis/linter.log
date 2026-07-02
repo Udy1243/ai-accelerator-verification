@@ -1,0 +1,18 @@
+%Warning-EOFNEWLINE: /home/ugunt/projects/ai-accelerator-verification/rung4-gear-quantizer/openlane/../rtl/gear_quantizer.sv:48:10: Missing newline at end of file (POSIX 3.206).
+                                                                                                                                  : ... Suggest add newline.
+   48 | endmodule
+      |          ^
+                     ... For warning description see https://verilator.org/warn/EOFNEWLINE?v=5.009
+                     ... Use "/* verilator lint_off EOFNEWLINE */" and lint_on around source to disable this message.
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung4-gear-quantizer/openlane/../rtl/gear_quantizer.sv:29:31: Operator GTS expects 12 bits on the RHS, but RHS's VARREF 'INT4_MAX' generates 4 bits.
+                                                                                                                                   : ... In instance gear_quantizer
+   29 |     post_clip_res = (mult_res > INT4_MAX) ? INT4_MAX : (mult_res < INT4_MIN) ? INT4_MIN : mult_res[INT4_WIDTH-1:0];
+      |                               ^
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung4-gear-quantizer/openlane/../rtl/gear_quantizer.sv:29:66: Operator LTS expects 12 bits on the RHS, but RHS's VARREF 'INT4_MIN' generates 4 bits.
+                                                                                                                                   : ... In instance gear_quantizer
+   29 |     post_clip_res = (mult_res > INT4_MAX) ? INT4_MAX : (mult_res < INT4_MIN) ? INT4_MIN : mult_res[INT4_WIDTH-1:0];
+      |                                                                  ^
+%Warning-UNUSEDSIGNAL: /home/ugunt/projects/ai-accelerator-verification/rung4-gear-quantizer/openlane/../rtl/gear_quantizer.sv:15:17: Signal is not used: 'round_mode'
+                                                                                                                                    : ... In instance gear_quantizer
+   15 |     input logic round_mode
+      |                 ^~~~~~~~~~

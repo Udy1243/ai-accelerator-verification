@@ -1,0 +1,26 @@
+
+47. Printing statistics.
+
+=== gear_quantizer ===
+
+   Number of wires:                324
+   Number of wire bits:            351
+   Number of public wires:          12
+   Number of public wire bits:      39
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:                327
+     $_ANDNOT_                     119
+     $_AND_                         30
+     $_DFFE_PN0P_                   13
+     $_DFF_PN0_                      1
+     $_MUX_                          6
+     $_NAND_                        22
+     $_NOR_                         11
+     $_NOT_                         17
+     $_ORNOT_                       20
+     $_OR_                          10
+     $_XNOR_                        22
+     $_XOR_                         56
+
