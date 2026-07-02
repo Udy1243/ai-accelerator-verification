@@ -376,6 +376,8 @@ else:
 |------|-------------|----------|
 | 1-6 | Directed: normal quantization, positive/negative outlier, boundary, scale=0, negative normal | 6/6 pass |
 | + | 1,000 random vectors vs Python golden model | 0 failures |
+| + | UVM: 200 constrained-random transactions (EDA Playground) | 200/200 pass, 0 UVM_ERROR |
+| + | Functional coverage: 6 covergroups | 100% all bins |
 
 ## OpenLane SKY130 Results
 
@@ -407,6 +409,7 @@ container run `./flow.tcl -design <path-to>/rung4-gear-quantizer/openlane -overw
 
 Rung 4 of a four-rung AI accelerator verification project. It closes the
 loop on the GEAR-inspired quantization concept the whole project builds
-toward. Next up: a full UVM testbench with functional coverage on
-EDA Playground, following the Rung 3 template.
+toward, with a full UVM testbench and 100% functional coverage on
+EDA Playground (Aldec Riviera-PRO, UVM 1.2), following the Rung 3
+template. Next up: implement the `round_mode` rounding path (phase 2).
  

@@ -84,6 +84,36 @@ the die scales to the design instead of reusing a fixed area — gear_quantizer
 is roughly a quarter the cell count of the Rung 2 quantizer, so its core area
 is correspondingly smaller rather than artificially matching it.
 
+### UVM Testbench + Functional Coverage (EDA Playground)
+
+Aldec Riviera-PRO 2025.04, UVM 1.2 — full env (interface, sequence item with
+constraints, sequence, driver, monitor, scoreboard, coverage collector).
+
+```
+Results: 200 passed, 0 failed
+UVM_ERROR : 0    UVM_FATAL : 0
+
+Overall covergroup coverage: 100.00%
+  cp_data_in_range: 100.00%
+  cp_outlier:       100.00%
+  cp_boundary:      100.00%
+  cp_clip:          100.00%
+  cp_scale:         100.00%
+  cp_round_mode:    100.00%
+```
+
+200 constrained-random transactions, including a `force_boundary` constraint
+(~15% of transactions) that forces `abs(data_in) == threshold` — without it,
+the exact-equality boundary case is a single point in a ~256×256 random space
+and is very unlikely to get hit by chance. `cp_round_mode` hitting 100% only
+confirms both values were driven as stimulus; `round_mode` has no effect on
+DUT behavior until phase 2 (rounding path) is implemented.
+
+Unlike Rung 3's AXI-Stream `dot_product`, this DUT has no `tready` handshake —
+it's a fixed 1-cycle-latency pipeline with no internal buffering that could
+stall. The driver instead holds inputs steady until `valid_out` fires before
+moving to the next transaction (2 cycles/transaction).
+
 ## How to Run
 
 ```bash
@@ -119,7 +149,7 @@ rtl/gear_quantizer.sv     — RTL
 tb/tb_gear_quantizer.sv   — directed testbench (6 tests)
 tb/tb_cosim.sv            — co-simulation testbench (reads sim/vectors.txt)
 tb/generate_vectors.py    — Python golden model + vector generator
-tb/uvm/                   — UVM testbench (in progress)
+tb/uvm/testbench.sv       — UVM testbench + functional coverage (complete)
 Makefile                  — sim / cosim / synth / waves targets
 TESTPLAN.md               — verification plan
 ```

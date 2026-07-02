@@ -72,3 +72,13 @@ Verification is complete when:
 **Status: OpenLane complete.** Flow finished with 0 routing violations,
 0 antenna violations, 0 LVS errors — 233 cells, 5,780.5 µm² core area at
 42.5% utilization, 257.7 MHz max frequency, ~0.117 mW typical power.
+
+**Status: UVM + functional coverage complete.** EDA Playground (Aldec
+Riviera-PRO 2025.04, UVM 1.2), 200 constrained-random transactions
+(including a `force_boundary` bias constraint to guarantee the exact
+`abs(data_in) == threshold` bin gets hit) — scoreboard: 200/200 passed,
+0 UVM_ERROR/UVM_FATAL. All 6 covergroups hit 100% coverage. Note:
+`cp_round_mode` reaching 100% only confirms both values were driven as
+stimulus — `round_mode` has no effect on DUT behavior until the phase 2
+rounding path is implemented, so that bin isn't a meaningful functional
+check yet.
