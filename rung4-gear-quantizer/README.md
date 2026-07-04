@@ -86,24 +86,31 @@ path — flip-flop count is unchanged since the new logic is purely combinationa
 
 ### OpenLane SKY130 Results
 
-**Note:** these numbers are from the phase-1 RTL (329 Yosys cells), before the
-round_mode rounding path was added (now 343 cells). Area/power/timing will
-shift slightly with the extra combinational logic — re-run OpenLane to refresh
-these once phase 2 is otherwise verified.
+| Metric | Phase 1 | Phase 2 (current) |
+|--------|---------|--------------------|
+| Core area | 5,780.5 µm² | 6,313.6 µm² |
+| Logic cells | 233 | 253 |
+| Core utilization | 42.5% | 43.0% |
+| Critical path | 3.88 ns | 13.19 ns |
+| Max frequency | 257.7 MHz | ~75.8 MHz |
+| Target frequency | 40 MHz | 40 MHz |
+| Timing slack | +21.12 ns | +11.81 ns |
+| Total power (typical) | ~0.117 mW | ~0.136 mW |
+| Routing (DRC) violations | 0 | 0 |
+| Antenna violations | 0 | 0 |
+| LVS errors | 0 | 0 |
 
-| Metric | Value |
-|--------|-------|
-| Core area | 5,780.5 µm² |
-| Logic cells | 233 |
-| Core utilization | 42.5% |
-| Critical path | 3.88 ns |
-| Max frequency | 257.7 MHz |
-| Target frequency | 40 MHz |
-| Timing slack | +21.12 ns |
-| Total power (typical) | ~0.117 mW |
-| Routing (DRC) violations | 0 |
-| Antenna violations | 0 |
-| LVS errors | 0 |
+Max frequency dropped from 257.7 MHz to ~75.8 MHz despite only +20 cells,
+because the round-up increment (`rounded_res = shifted_res + round_incr`) is
+a real adder inserted in series, directly in front of the (unchanged) clip
+comparison logic. Unlike a mux, an adder's carry has to ripple sequentially
+through every bit position before the top bit is known, so it adds real gate
+delay proportional to width — the critical path (per the signoff STA report)
+starts at `scale[3]` and runs through this carry chain into the clip logic.
+Still comfortably meets the 40 MHz target (+11.81 ns slack). If higher
+frequency were ever needed, the fix would be the same idea as Rung 3's FSM
+DONE state — pipeline the shift/round and the clip/output into separate
+cycles rather than one long combinational chain.
 
 Floorplan uses relative sizing (`FP_CORE_UTIL=40`, `PL_TARGET_DENSITY=0.75`) so
 the die scales to the design instead of reusing a fixed area — gear_quantizer
@@ -128,7 +135,6 @@ Overall covergroup coverage: 100.00%
   cp_round_mode:    100.00%
   cp_round_applied: 100.00%
 ```
-(Expected — re-run on EDA Playground against the updated `testbench.sv` to confirm.)
 
 200 constrained-random transactions, including a `force_boundary` constraint
 (~15% of transactions) that forces `abs(data_in) == threshold` — without it,
@@ -143,6 +149,18 @@ set), with `applied`/`not_applied` bins. Both bins reliably hit within 200
 transactions with no extra bias constraint needed — unlike the exact
 boundary case, "rounding fires" is roughly a 1-in-4 event per non-outlier
 transaction, not a single point in a huge space.
+
+**Bug found and fixed during this run:** the first pass came back with
+scoreboard 200/200 passed but `cp_round_applied` flat at 0.00% on both
+bins. Root cause — the coverage collector's `write()` read
+`item.round_applied` without ever calling `item.compute_expected()`
+itself; that field was only populated as a side effect of the
+scoreboard's `write()` call on the same shared item object (both are
+independent subscribers of the same monitor analysis port, with no
+guaranteed call order between them). Fixed by having the coverage
+collector call `item.compute_expected()` unconditionally at the top of
+its own `write()` — never rely on another analysis-port subscriber
+having mutated the shared item first.
 
 Unlike Rung 3's AXI-Stream `dot_product`, this DUT has no `tready` handshake —
 it's a fixed 1-cycle-latency pipeline with no internal buffering that could

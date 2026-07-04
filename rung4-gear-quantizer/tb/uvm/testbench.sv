@@ -350,6 +350,11 @@ class gear_quantizer_coverage extends uvm_component;
         logic [7:0] abs_val;
         abs_val = item.data_in[7] ? -item.data_in : item.data_in;
 
+        // compute_expected() must be called here rather than relied on from
+        // the scoreboard's write() — both are independent subscribers of the
+        // same monitor item, with no guaranteed call order between them
+        item.compute_expected();
+
         cov_data_in      = item.data_in;
         cov_threshold    = item.threshold;
         cov_scale        = item.scale;

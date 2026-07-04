@@ -94,15 +94,31 @@ stimulus — `round_mode` has no effect on DUT behavior until the phase 2
 rounding path is implemented, so that bin isn't a meaningful functional
 check yet.
 
-**Status: phase 2 (round_mode rounding path) implemented.** RTL, directed
-tests (10/10), and Python co-sim (1000/1000) all updated and passing under
-the new fixed-point scale semantics (`scale` now means `scale/16`,
-attenuate-only). UVM `testbench.sv` updated to match — golden model in
-`compute_expected()` now includes the shift/round path, and a new
-`cp_round_applied` covergroup bin tracks whether the round-up increment
-actually fired, addressing the "not a meaningful check yet" note above.
-Needs re-running on EDA Playground to confirm 200/200 + 100% coverage
-against the updated model, since UVM can't be run locally. Yosys
-re-synthesized: 343 cells (was 329), 14 flip-flops (unchanged, new logic
-is combinational). OpenLane SKY130 numbers below are stale (from the
-phase-1 RTL) and should be re-run once the UVM re-run confirms phase 2.
+**Status: phase 2 (round_mode rounding path) complete, including UVM.** RTL,
+directed tests (10/10), Python co-sim (1000/1000), and UVM (200/200, 100%
+coverage on all 7 covergroups including the new `cp_round_applied` bin) all
+updated and passing under the new fixed-point scale semantics (`scale` now
+means `scale/16`, attenuate-only). Verified on EDA Playground (Aldec
+Riviera-PRO 2025.04, UVM 1.2) — 0 UVM_ERROR/UVM_FATAL.
+
+A real bug was caught during the first UVM run: `cp_round_applied` came back
+flat at 0.00% (both bins) because the coverage collector read
+`item.round_applied` without ever calling `item.compute_expected()` itself —
+that field was only being populated as a side effect of the scoreboard's
+`write()` call on the same shared item, and the two are independent
+analysis-port subscribers with no guaranteed call order between them. Fixed
+by having the coverage collector call `compute_expected()` unconditionally
+in its own `write()`. Re-run confirmed 100% across the board.
+
+Yosys re-synthesized: 343 cells (was 329), 14 flip-flops (unchanged, new
+logic is combinational).
+
+**OpenLane SKY130 re-run complete.** 253 logic cells (was 233), 6,313.6 µm²
+core area at 43.0% utilization, 0 DRC/antenna/LVS violations. Max frequency
+dropped from 257.7 MHz to ~75.8 MHz (critical path 3.88ns → 13.19ns) — still
+comfortably meets the 40MHz target (+11.81ns slack). The drop comes from the
+round-up increment adder (`rounded_res = shifted_res + round_incr`) sitting
+in series in front of the existing clip comparators: an adder's carry
+propagates sequentially across its full bit width, unlike a mux which costs
+one gate delay regardless of width. Total power rose slightly, ~0.117mW →
+~0.136mW. **Phase 2 is now fully complete across every verification stage.**
