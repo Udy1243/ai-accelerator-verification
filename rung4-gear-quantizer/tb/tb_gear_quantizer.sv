@@ -30,12 +30,14 @@ module tb_gear_quantizer;
 task automatic send(
     input logic signed [DATA_WIDTH-1:0] d_in,
     input logic        [DATA_WIDTH-1:0] thresh,
-    input logic        [INT4_WIDTH-1:0] sc
+    input logic        [INT4_WIDTH-1:0] sc,
+    input logic                         rmode
 );
-    data_in   = d_in;
-    threshold = thresh;
-    scale     = sc;
-    valid_in  = 1;
+    data_in    = d_in;
+    threshold  = thresh;
+    scale      = sc;
+    round_mode = rmode;
+    valid_in   = 1;
     @(posedge clk); #1;
     valid_in = 0;
 endtask
@@ -67,12 +69,16 @@ initial begin
     rst_n = 1;
     @(posedge clk); #1;
 
-    send(8,   20, 2); check(7,  0,   0,  "Test 1: Normal quantization");
-    send(30,  20, 2); check(0,  1,  30,  "Test 2: Positive outlier");
-    send(-25, 20, 2); check(0,  1, -25,  "Test 3: Negative outlier");
-    send(20,  20, 1); check(7,  0,   0,  "Test 4: Boundary (abs==threshold)");
-    send(10,  20, 0); check(0,  0,   0,  "Test 5: Scale zero");
-    send(-4,  20, 1); check(-4, 0,   0,  "Test 6: Negative normal");
+    send(8,   20, 2, 0); check(1,  0,   0,  "Test 1: Normal quantization");
+    send(30,  20, 2, 0); check(0,  1,  30,  "Test 2: Positive outlier");
+    send(-25, 20, 2, 0); check(0,  1, -25,  "Test 3: Negative outlier");
+    send(20,  20, 1, 0); check(1,  0,   0,  "Test 4: Boundary (abs==threshold)");
+    send(10,  20, 0, 0); check(0,  0,   0,  "Test 5: Scale zero");
+    send(-4,  20, 1, 0); check(-1, 0,   0,  "Test 6: Negative normal, truncate");
+    send(8,   20, 3, 0); check(1,  0,   0,  "Test 7a: round_mode=0 truncates");
+    send(8,   20, 3, 1); check(2,  0,   0,  "Test 7b: round_mode=1 rounds up (same inputs as 7a)");
+    send(127, 127, 1, 0); check(7,  0,   0,  "Test 8a: round_mode=0, at max, no overflow");
+    send(127, 127, 1, 1); check(7,  0,   0,  "Test 8b: round_mode=1 overflows max, clip saturates back to 7");
 
     $display("\nAll tests done.");
     $finish;

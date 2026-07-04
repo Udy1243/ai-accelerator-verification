@@ -17,16 +17,27 @@ module gear_quantizer #(
 
 logic  [DATA_WIDTH-1:0] abs_data_in;
 logic signed  [DATA_WIDTH + INT4_WIDTH - 1:0] mult_res;
+logic signed  [DATA_WIDTH + INT4_WIDTH - 1:0] shifted_res;
+logic signed  [DATA_WIDTH + INT4_WIDTH - 1:0] rounded_res;
+logic signed  [1:0] round_incr;
+logic round_bit;
 logic signed  [INT4_WIDTH-1:0] post_clip_res;
 logic outlier_comp_res;
 
+// scale is interpreted as a fixed-point fraction scale/2^INT4_WIDTH (0 to 15/16),
+// so it can only attenuate data_in, never amplify it
+localparam int SHIFT_BITS = INT4_WIDTH;
 localparam signed [INT4_WIDTH-1:0] INT4_MAX =  (1 << (INT4_WIDTH-1)) - 1;
 localparam signed [INT4_WIDTH-1:0] INT4_MIN = -(1 << (INT4_WIDTH-1));
 
 always_comb begin
     abs_data_in = (data_in[DATA_WIDTH-1]) ? -data_in : data_in;
     mult_res = data_in * $signed({1'b0, scale});
-    post_clip_res = (mult_res > INT4_MAX) ? INT4_MAX : (mult_res < INT4_MIN) ? INT4_MIN : mult_res[INT4_WIDTH-1:0];
+    shifted_res = mult_res >>> SHIFT_BITS;
+    round_bit = mult_res[SHIFT_BITS-1];
+    round_incr = (round_mode && round_bit) ? 2'sb01 : 2'sb00;
+    rounded_res = shifted_res + round_incr;
+    post_clip_res = (rounded_res > INT4_MAX) ? INT4_MAX : (rounded_res < INT4_MIN) ? INT4_MIN : rounded_res[INT4_WIDTH-1:0];
     outlier_comp_res = (abs_data_in > threshold);
 end
 

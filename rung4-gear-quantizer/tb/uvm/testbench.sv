@@ -59,6 +59,7 @@ class gear_quantizer_seq_item extends uvm_sequence_item;
     logic          exp_is_outlier, act_is_outlier;
     logic signed [INT4_WIDTH-1:0] exp_int4, act_int4;
     logic signed [DATA_WIDTH-1:0] exp_sideband, act_sideband;
+    logic          round_applied;  // did round_mode actually add +1 this txn?
 
     constraint c_threshold_range { threshold inside {[0:100]}; }
 
@@ -78,20 +79,31 @@ class gear_quantizer_seq_item extends uvm_sequence_item;
     function void compute_expected();
         logic [DATA_WIDTH-1:0] abs_val;
         logic signed [DATA_WIDTH+INT4_WIDTH-1:0] mult_res;
+        logic signed [DATA_WIDTH+INT4_WIDTH-1:0] shifted_res;
+        logic signed [DATA_WIDTH+INT4_WIDTH-1:0] rounded_res;
+        logic signed [1:0] round_incr;
+        logic round_bit;
+        localparam int SHIFT_BITS = INT4_WIDTH;
         localparam signed [INT4_WIDTH-1:0] INT4_MAX =  (1 << (INT4_WIDTH-1)) - 1;
         localparam signed [INT4_WIDTH-1:0] INT4_MIN = -(1 << (INT4_WIDTH-1));
 
-        abs_val  = data_in[DATA_WIDTH-1] ? -data_in : data_in;
-        mult_res = data_in * $signed({1'b0, scale});
+        abs_val     = data_in[DATA_WIDTH-1] ? -data_in : data_in;
+        mult_res    = data_in * $signed({1'b0, scale});
+        shifted_res = mult_res >>> SHIFT_BITS;
+        round_bit   = mult_res[SHIFT_BITS-1];
+        round_incr  = (round_mode && round_bit) ? 2'sb01 : 2'sb00;
+        rounded_res = shifted_res + round_incr;
 
         exp_is_outlier = (abs_val > threshold);
         if (exp_is_outlier) begin
-            exp_int4     = '0;
-            exp_sideband = data_in;
+            exp_int4      = '0;
+            exp_sideband  = data_in;
+            round_applied = 1'b0;
         end else begin
-            exp_int4     = (mult_res > INT4_MAX) ? INT4_MAX :
-                            (mult_res < INT4_MIN) ? INT4_MIN : mult_res[INT4_WIDTH-1:0];
-            exp_sideband = '0;
+            exp_int4      = (rounded_res > INT4_MAX) ? INT4_MAX :
+                             (rounded_res < INT4_MIN) ? INT4_MIN : rounded_res[INT4_WIDTH-1:0];
+            exp_sideband  = '0;
+            round_applied = (round_incr != 0);
         end
     endfunction
 
@@ -272,6 +284,7 @@ class gear_quantizer_coverage extends uvm_component;
     logic [7:0]        cov_threshold;
     logic [3:0]        cov_scale;
     logic              cov_round_mode;
+    logic              cov_round_applied;
     logic              cov_is_outlier;
     logic signed [3:0] cov_int4;
     int                cov_boundary_rel;  // -1: abs<th, 0: abs==th, 1: abs>th
@@ -312,6 +325,15 @@ class gear_quantizer_coverage extends uvm_component;
             bins truncate = {0};
             bins round    = {1};
         }
+
+        // Confirms round_mode isn't just driven as stimulus — the +1
+        // round-up increment must have actually fired at least once,
+        // and also been skipped at least once (round_mode=0 or no
+        // fractional remainder), proving distinct observed behavior.
+        cp_round_applied: coverpoint cov_round_applied {
+            bins applied     = {1};
+            bins not_applied = {0};
+        }
     endgroup
 
     function new(string name, uvm_component parent);
@@ -332,6 +354,7 @@ class gear_quantizer_coverage extends uvm_component;
         cov_threshold    = item.threshold;
         cov_scale        = item.scale;
         cov_round_mode   = item.round_mode;
+        cov_round_applied = item.round_applied;
         cov_is_outlier   = item.act_is_outlier;
         cov_int4         = item.act_int4;
         cov_boundary_rel = (abs_val < item.threshold) ? -1 :
@@ -341,14 +364,15 @@ class gear_quantizer_coverage extends uvm_component;
 
     function void report_phase(uvm_phase phase);
         `uvm_info("COVERAGE", $sformatf(
-            "\nOverall covergroup coverage: %0.2f%%\n  cp_data_in_range: %0.2f%%\n  cp_outlier:       %0.2f%%\n  cp_boundary:      %0.2f%%\n  cp_clip:          %0.2f%%\n  cp_scale:         %0.2f%%\n  cp_round_mode:    %0.2f%%\n",
+            "\nOverall covergroup coverage: %0.2f%%\n  cp_data_in_range: %0.2f%%\n  cp_outlier:       %0.2f%%\n  cp_boundary:      %0.2f%%\n  cp_clip:          %0.2f%%\n  cp_scale:         %0.2f%%\n  cp_round_mode:    %0.2f%%\n  cp_round_applied: %0.2f%%\n",
             cg.get_coverage(),
             cg.cp_data_in_range.get_coverage(),
             cg.cp_outlier.get_coverage(),
             cg.cp_boundary.get_coverage(),
             cg.cp_clip.get_coverage(),
             cg.cp_scale.get_coverage(),
-            cg.cp_round_mode.get_coverage()), UVM_LOW)
+            cg.cp_round_mode.get_coverage(),
+            cg.cp_round_applied.get_coverage()), UVM_LOW)
     endfunction
 
 endclass

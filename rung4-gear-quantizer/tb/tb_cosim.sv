@@ -22,6 +22,7 @@ module tb_cosim;
     logic signed [DATA_WIDTH-1:0] exp_sideband;
     logic signed [INT4_WIDTH-1:0] exp_int4;
     logic                         exp_outlier;
+    logic                         vec_round_mode;
 
     int fd, passes, fails;
 
@@ -37,10 +38,11 @@ module tb_cosim;
         fd = $fopen("sim/vectors.txt", "r");
 
         while (!$feof(fd)) begin
-            if ($fscanf(fd, "%d %d %d %d %d %d\n",
-                        data_in, threshold, scale,
-                        exp_outlier, exp_int4, exp_sideband) == 6) begin
+            if ($fscanf(fd, "%d %d %d %d %d %d %d\n",
+                        data_in, threshold, scale, vec_round_mode,
+                        exp_outlier, exp_int4, exp_sideband) == 7) begin
                 // drive and check — what goes here?
+                round_mode = vec_round_mode;
                 valid_in = 1;
                 @(posedge clk); #1;
                 valid_in = 0;
