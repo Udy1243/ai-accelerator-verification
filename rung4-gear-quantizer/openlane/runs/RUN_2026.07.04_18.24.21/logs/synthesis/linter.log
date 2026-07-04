@@ -1,0 +1,14 @@
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung4-gear-quantizer/openlane/../rtl/gear_quantizer.sv:39:31: Operator ADD expects 12 bits on the RHS, but RHS's VARREF 'round_incr' generates 2 bits.
+                                                                                                                                   : ... In instance gear_quantizer
+   39 |     rounded_res = shifted_res + round_incr;
+      |                               ^
+                      ... For warning description see https://verilator.org/warn/WIDTHEXPAND?v=5.009
+                      ... Use "/* verilator lint_off WIDTHEXPAND */" and lint_on around source to disable this message.
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung4-gear-quantizer/openlane/../rtl/gear_quantizer.sv:40:34: Operator GTS expects 12 bits on the RHS, but RHS's VARREF 'INT4_MAX' generates 4 bits.
+                                                                                                                                   : ... In instance gear_quantizer
+   40 |     post_clip_res = (rounded_res > INT4_MAX) ? INT4_MAX : (rounded_res < INT4_MIN) ? INT4_MIN : rounded_res[INT4_WIDTH-1:0];
+      |                                  ^
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung4-gear-quantizer/openlane/../rtl/gear_quantizer.sv:40:72: Operator LTS expects 12 bits on the RHS, but RHS's VARREF 'INT4_MIN' generates 4 bits.
+                                                                                                                                   : ... In instance gear_quantizer
+   40 |     post_clip_res = (rounded_res > INT4_MAX) ? INT4_MAX : (rounded_res < INT4_MIN) ? INT4_MIN : rounded_res[INT4_WIDTH-1:0];
+      |                                                                        ^

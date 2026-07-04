@@ -367,30 +367,39 @@ that matter most.
 if abs(data_in) > threshold:
     is_outlier = 1, sideband_out = data_in, int4_out = 0
 else:
-    is_outlier = 0, int4_out = clip(data_in x scale, -8, 7), sideband_out = 0
+    is_outlier = 0, sideband_out = 0
+    product = data_in x scale                 # scale is Q0.4: scale/16, so 0 to 15/16
+    int4_out = clip(round_or_truncate(product >> 4, round_mode), -8, 7)
 ```
+
+`scale` is a fixed-point fraction (`scale/16`), so it can only attenuate
+`data_in`, never amplify it. `round_mode` selects between truncating the
+shift (0) and rounding to nearest based on the dropped bits' MSB (1); clip
+still applies after rounding, since a round-up can push a near-max value
+past `INT4_MAX`.
 
 ## Verification
 
 | Test | Description | Expected |
 |------|-------------|----------|
 | 1-6 | Directed: normal quantization, positive/negative outlier, boundary, scale=0, negative normal | 6/6 pass |
-| + | 1,000 random vectors vs Python golden model | 0 failures |
+| 7-10 | Directed: round_mode changes result, round-then-clip saturation | 4/4 pass |
+| + | 1,000 random vectors (incl. round_mode) vs Python golden model | 0 failures |
 | + | UVM: 200 constrained-random transactions (EDA Playground) | 200/200 pass, 0 UVM_ERROR |
-| + | Functional coverage: 6 covergroups | 100% all bins |
+| + | Functional coverage: 7 covergroups | 100% all bins |
 
 ## OpenLane SKY130 Results
 
 | Metric | Value |
 |--------|-------|
-| Core area | 5,780.5 um^2 |
-| Logic cells | 233 |
-| Core utilization | 42.5% |
-| Critical path | 3.88 ns |
-| Max frequency | 257.7 MHz |
+| Core area | 6,313.6 um^2 |
+| Logic cells | 253 |
+| Core utilization | 43.0% |
+| Critical path | 13.19 ns |
+| Max frequency | ~75.8 MHz |
 | Target frequency | 40 MHz |
-| Timing slack | +21.12 ns |
-| Total power (typical) | ~0.117 mW |
+| Timing slack | +11.81 ns |
+| Total power (typical) | ~0.136 mW |
 | Routing violations | 0 |
 | LVS errors | 0 |
 
@@ -411,5 +420,11 @@ Rung 4 of a four-rung AI accelerator verification project. It closes the
 loop on the GEAR-inspired quantization concept the whole project builds
 toward, with a full UVM testbench and 100% functional coverage on
 EDA Playground (Aldec Riviera-PRO, UVM 1.2), following the Rung 3
-template. Next up: implement the `round_mode` rounding path (phase 2).
+template. Phase 2 (the `round_mode` rounding path) is complete: `scale` was
+reinterpreted as a fixed-point fraction so rounding has a real fractional
+remainder to act on, verified end to end (directed/co-sim/UVM/coverage),
+and re-synthesized through OpenLane. The rounding adder cost real timing
+margin (257.7MHz -> ~75.8MHz) despite adding only 20 cells, since an
+adder's carry propagation scales with bit width the way a mux's delay
+doesn't — still comfortably meets the 40MHz target.
  
