@@ -1,1 +1,6 @@
+**/sim/out
+**/sim/*.vcd
+**/sim/cosim
+**/sim/synth.log
+**/sim/vectors.txt
 CLAUDE.md
