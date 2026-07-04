@@ -1,3 +1,22 @@
+# AI Accelerator Verification
+
+A four-rung hardware verification project implementing and verifying
+a GEAR-inspired outlier-aware INT4 quantizer — the core compression
+technique used in modern LLM inference acceleration.
+
+Built from scratch over one summer to target Nvidia and Apple hardware
+verification internships. Every rung produces synthesized RTL with real
+area, power, and timing numbers on the open-source SKY130 process node.
+
+| Rung | Module | Key result |
+|------|--------|------------|
+| 1 | INT8 MAC unit | 6 directed tests, Yosys INT4/INT8/INT16 comparison |
+| 2 | INT4/INT8 quantizer | 1000 random vectors, OpenLane 142MHz/0.34mW |
+| 3 | Dot product engine | UVM 100/100, AXI-Stream, 8 parallel MACs |
+| 4 | GEAR outlier quantizer | UVM 200/200, 100% functional coverage, OpenLane |
+
+**Tools:** SystemVerilog · UVM 1.2 · Yosys · OpenLane · SKY130 · Python · iverilog · Aldec Riviera-PRO
+
 # Rung 1 — Parameterized INT8 MAC Unit
 
 A synthesizable multiply-accumulate unit in SystemVerilog, 
