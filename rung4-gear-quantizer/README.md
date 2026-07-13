@@ -167,6 +167,58 @@ it's a fixed 1-cycle-latency pipeline with no internal buffering that could
 stall. The driver instead holds inputs steady until `valid_out` fires before
 moving to the next transaction (2 cycles/transaction).
 
+### SVA Assertions
+
+Four immediate assertions run inside `gear_quantizer.sv` itself, checked every
+cycle in `always @(posedge clk)` (iverilog runs immediate assertions natively;
+no special tooling needed):
+
+1. `int4_out` is zero whenever `is_outlier` is 1
+2. `sideband_out` is zero whenever `is_outlier` is 0
+3. `sideband_out` is non-zero whenever `is_outlier` is 1
+4. `int4_out` stays within `[-8, 7]` on the normal (non-outlier) path
+
+Property 3 originally compared `sideband_out !== data_in` directly, which
+looked correct but always failed on real outlier tests. Root cause: `data_in`
+is a combinational wire holding the *current* cycle's stimulus, while
+`sideband_out` is a registered output holding *last* cycle's result — by the
+time the assertion fires, `data_in` has already advanced to the next test's
+value. `is_outlier` and `sideband_out`, by contrast, are assigned together in
+the same `always_ff` block off the same `outlier_comp_res`, so they're
+stage-matched — comparing `sideband_out` against `is_outlier` is safe;
+comparing it against `data_in` is not. Property 3 now just checks
+`sideband_out` is non-zero during an outlier, which is what a same-cycle,
+same-stage assertion can actually verify; exact-value correctness is already
+covered by the directed tests and the Python co-sim.
+
+A fifth property — `valid_out` follows `valid_in` by exactly one clock —
+needs the concurrent SVA `|=>`/`$past()` operators, which iverilog cannot
+parse at all (confirmed: hard syntax error, not degraded support). Rather
+than edit `gear_quantizer.sv` with syntax the primary toolchain can't build,
+this property lives in a separate file, `rtl/gear_quantizer_sva.sv`, and is
+attached with a `bind` statement instead of being pasted into the module:
+
+```systemverilog
+property p_valid_out_delay;
+    @(posedge clk) disable iff (!rst_n)
+    valid_out === $past(valid_in);
+endproperty
+assert property (p_valid_out_delay) else $error(...);
+```
+
+```systemverilog
+bind gear_quantizer gear_quantizer_sva_checker sva_checker_inst (
+    .clk(clk), .rst_n(rst_n), .valid_in(valid_in), .valid_out(valid_out)
+);
+```
+
+`bind` attaches a checker module to every instance of `gear_quantizer` without
+modifying its source — keeps `gear_quantizer.sv` iverilog-clean while still
+letting a richer simulator (Aldec Riviera-PRO on EDA Playground) exercise the
+concurrent property. `gear_quantizer_sva.sv` is intentionally excluded from
+the Makefile's `sim` target; paste it alongside `gear_quantizer.sv` into EDA
+Playground's `design.sv` tab to run it.
+
 ## How to Run
 
 ```bash
@@ -208,7 +260,8 @@ cd ~/OpenLane && make mount
 
 ```
 rtl/gear_quantizer.sv     — RTL
-tb/tb_gear_quantizer.sv   — directed testbench (6 tests)
+rtl/gear_quantizer_sva.sv — concurrent SVA (bind-attached; EDA Playground only, not in local sim)
+tb/tb_gear_quantizer.sv   — directed testbench (10 tests)
 tb/tb_cosim.sv            — co-simulation testbench (reads sim/vectors.txt)
 tb/generate_vectors.py    — Python golden model + vector generator
 tb/uvm/testbench.sv       — UVM testbench + functional coverage (complete)

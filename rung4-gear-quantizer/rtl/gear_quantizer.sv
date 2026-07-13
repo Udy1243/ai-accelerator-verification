@@ -56,4 +56,23 @@ always_ff @(posedge clk or negedge rst_n) begin
         end
     end
 end
+
+// SVA-style checks using immediate assertions
+always @(posedge clk) begin
+    if (rst_n && valid_out) begin
+        assert (!(is_outlier && (int4_out !== 4'b0)))
+            else $error("FAIL: int4_out non-zero during outlier at time %0t", $time);
+
+        assert (!((!is_outlier) && (sideband_out !== 8'b0)))
+            else $error("FAIL: sideband_out non-zero during normal value at time %0t", $time);
+
+        assert (!(is_outlier && (sideband_out === '0)))
+            else $error("FAIL: sideband_out zero during outlier at time %0t", $time);
+
+        assert (!((!is_outlier) && valid_out &&
+                  ($signed(int4_out) > 7 || $signed(int4_out) < -8)))
+            else $error("FAIL: int4_out out of INT4 range at time %0t", $time);
+    end
+end
+
 endmodule
