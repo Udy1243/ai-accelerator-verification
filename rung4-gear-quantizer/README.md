@@ -279,3 +279,19 @@ tb/uvm/testbench.sv       — UVM testbench + functional coverage (complete)
 Makefile                  — sim / cosim / synth / waves targets
 TESTPLAN.md               — verification plan
 ```
+## Formal Properties (SVA)
+
+Four properties verified as immediate assertions running continuously
+throughout simulation:
+
+| Property | Description |
+|----------|-------------|
+| P1 | `int4_out == 0` whenever `is_outlier=1` |
+| P2 | `sideband_out == 0` whenever `is_outlier=0` |
+| P3 | `sideband_out != 0` whenever `is_outlier=1` |
+| P4 | `int4_out` within INT4 range [-8,7] on normal path |
+
+Properties are implemented as immediate assertions in `always @(posedge clk)`
+blocks inside `gear_quantizer.sv`. Concurrent SVA syntax with `|->` and `|=>`
+operators requires a commercial simulator (Riviera-PRO, VCS, or Questa)
+for full formal verification.
