@@ -214,10 +214,21 @@ bind gear_quantizer gear_quantizer_sva_checker sva_checker_inst (
 
 `bind` attaches a checker module to every instance of `gear_quantizer` without
 modifying its source — keeps `gear_quantizer.sv` iverilog-clean while still
-letting a richer simulator (Aldec Riviera-PRO on EDA Playground) exercise the
-concurrent property. `gear_quantizer_sva.sv` is intentionally excluded from
-the Makefile's `sim` target; paste it alongside `gear_quantizer.sv` into EDA
-Playground's `design.sv` tab to run it.
+letting a richer simulator exercise the concurrent property. `gear_quantizer_sva.sv`
+is intentionally excluded from the Makefile's `sim` target.
+
+**Run on EDA Playground (Aldec Riviera-PRO 2025.04):** compiled clean —
+`Compile success 0 Errors 0 Warnings` — confirming the `property`/
+`assert property`/`bind` syntax is valid SVA. Elaboration then failed with
+`You do not have a valid license to simulate SystemVerilog assertion module`
+— a licensing-tier restriction (Riviera-PRO's free EDA Playground tier
+includes UVM + functional coverage but gates SVA elaboration behind a
+separate paid license), not a defect in the property or the RTL. Checked all
+other free tools on the account (GHDL, Verilator, Icarus Verilog) — none
+support UVM, so there's no free combination that runs both UVM and
+concurrent SVA together. Property 5 is written and parser-verified but
+cannot currently be elaborated end-to-end on any available toolchain; it's
+ready to run as-is if a licensed simulator becomes available.
 
 ## How to Run
 
