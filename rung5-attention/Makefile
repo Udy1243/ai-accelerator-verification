@@ -1,4 +1,4 @@
-.PHONY: sim sim_attn cosim waves synth clean
+.PHONY: sim sim_attn cosim cosim_attn waves synth clean
 
 MAC = ../rung1-mac-unit/rtl/mac_unit.sv
 DP  = ../rung3-dot-product/rtl/dot_product.sv
@@ -10,6 +10,11 @@ sim:
 sim_attn:
 	mkdir -p sim
 	iverilog -g2012 -o sim/attn_out $(MAC) $(DP) rtl/softmax.sv rtl/attention.sv tb/attention_tb.sv && vvp sim/attn_out
+
+cosim_attn:
+	mkdir -p sim
+	python3 tb/generate_attention_vectors.py
+	iverilog -g2012 -o sim/attn_cosim_out $(MAC) $(DP) rtl/softmax.sv rtl/attention.sv tb/attention_cosim_tb.sv && vvp sim/attn_cosim_out
 
 cosim:
 	mkdir -p sim
