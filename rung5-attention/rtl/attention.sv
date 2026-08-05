@@ -209,7 +209,9 @@ module attention #(
                             weights[sm_cycle-1][j] <= sm_weights_flat[WEIGHT_WIDTH*(j+1)-1 -: WEIGHT_WIDTH];
                         end
                         if (sm_cycle == SEQ_LEN) begin
-                            state <= WEIGHTED_SUM;
+                            out_row <= 0;
+                            out_col <= 0;
+                            state   <= WEIGHTED_SUM;
                         end
                     end
                 end

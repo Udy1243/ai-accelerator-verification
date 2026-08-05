@@ -1,8 +1,15 @@
-.PHONY: sim cosim waves synth clean
+.PHONY: sim sim_attn cosim waves synth clean
+
+MAC = ../rung1-mac-unit/rtl/mac_unit.sv
+DP  = ../rung3-dot-product/rtl/dot_product.sv
 
 sim:
 	mkdir -p sim
 	iverilog -g2012 -o sim/out rtl/softmax.sv tb/softmax_tb.sv && vvp sim/out
+
+sim_attn:
+	mkdir -p sim
+	iverilog -g2012 -o sim/attn_out $(MAC) $(DP) rtl/softmax.sv rtl/attention.sv tb/attention_tb.sv && vvp sim/attn_out
 
 cosim:
 	mkdir -p sim
