@@ -3,4 +3,8 @@
 **/sim/cosim
 **/sim/synth.log
 **/sim/vectors.txt
+**/sim/attn_out
+**/sim/attn_cosim_out
+**/sim/attention_vectors.txt
+**/__pycache__/
 CLAUDE.md
