@@ -1,0 +1,19 @@
+Design Name: attention
+Run Directory: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/runs/RUN_2026.08.07_18.35.37
+----------------------------------------
+
+Magic DRC Summary:
+Source: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/runs/RUN_2026.08.07_18.35.37/reports/signoff/drc.rpt
+Total Magic DRC violations is 0
+----------------------------------------
+
+LVS Summary:
+Source: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/runs/RUN_2026.08.07_18.35.37/logs/signoff/39-attention.lef.lvs.log
+Number of nets: 60969                      |Number of nets: 60969                      
+Design is LVS clean.
+----------------------------------------
+
+Antenna Summary:
+Source: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/runs/RUN_2026.08.07_18.35.37/logs/signoff/41-arc.log
+Pin violations: 38
+Net violations: 38

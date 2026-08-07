@@ -1,8 +1,9 @@
 # AI Accelerator Verification
 
-A four-rung hardware verification project implementing and verifying
-a GEAR-inspired outlier-aware INT4 quantizer — the core compression
-technique used in modern LLM inference acceleration.
+A five-rung hardware verification project implementing and verifying a
+GEAR-inspired outlier-aware INT4 quantizer and a scaled dot-product
+attention unit — the core compression and computation techniques used in
+modern LLM inference acceleration.
 
 | Rung | Module | Key result |
 |------|--------|------------|
@@ -10,6 +11,7 @@ technique used in modern LLM inference acceleration.
 | 2 | INT4/INT8 quantizer | 1000 random vectors, OpenLane 142MHz / 0.34mW |
 | 3 | Dot product engine | UVM 100/100, AXI-Stream, 8 parallel MACs |
 | 4 | GEAR outlier quantizer | UVM 200/200, 100% functional coverage, OpenLane |
+| 5 | Attention score unit | Directed+co-sim 1510/1510, OpenLane 25MHz / 0.44mW |
 
 **Tools:** SystemVerilog · UVM 1.2 · Yosys · OpenLane · SKY130 · Python · iverilog · Aldec Riviera-PRO
 
@@ -474,3 +476,117 @@ complete UVM 1.2 environment and 100% functional coverage across 7
 covergroups. The outlier detection and sideband routing logic is the
 key technique that makes aggressive INT4 quantization viable for
 production LLM inference without catastrophic accuracy loss.
+
+---
+
+# Rung 5 — Attention Score Unit
+
+Scaled dot-product attention (`Q × Kᵀ → scale → softmax → × V`) in
+SystemVerilog — the core computation inside every transformer layer —
+verified with directed testbenches and Python co-simulation, and
+synthesized through the full RTL-to-GDS flow on SKY130 via OpenLane.
+
+## What it does
+
+```
+scores  = Q × Kᵀ                    # [8,16] × [16,8] -> [8,8] (d_k cancels out)
+scaled  = scores >>> 2              # ÷ √d_k = ÷4
+weights = softmax(scaled)           # row-wise, numerically stable
+output  = weights × V               # [8,8] × [8,16] -> [8,16]
+```
+
+Two modules: `softmax.sv`, an 8-input numerically-stable softmax (subtracts
+the row max before exponentiating, looks up `exp()` via a LUT, normalizes
+via reciprocal-multiply instead of a real divider); and `attention.sv`, a
+6-state FSM that wires `softmax` together with two reused instances of
+Rung 3's `dot_product` (once for `Q·Kᵀ`, once for `weights·V`) to compute
+full attention over an 8-token, 16-dim sequence.
+
+## Design
+
+`attention.sv` loads Q/K/V one row at a time over a shared 267-pin bus
+(`row_data`/`row_addr`/`matrix_sel`/`load_valid`) instead of exposing the
+full matrices as combinational chip pins, and streams output back the same
+way (`out_row_data`/`out_valid`/`out_tlast`). An earlier flat-bus version
+needed 4,100 pins and couldn't fit through OpenLane's IO placer — this is
+the standard way real accelerators load large matrices, since pins/wires
+are physically expensive and clock cycles are nearly free by comparison.
+
+| Signal | Direction | Width | Description |
+|--------|-----------|-------|--------------|
+| clk, rst_n | input | 1 | Clock, active-low reset |
+| row_data | input | 128 | One Q/K/V row |
+| row_addr | input | 3 | Row index (0-7) |
+| matrix_sel | input | 2 | 00=Q, 01=K, 10=V |
+| load_valid | input | 1 | One-cycle load strobe |
+| start | input | 1 | Begin compute once loaded |
+| out_row_data | output | 128 (signed) | One output row |
+| out_valid | output | 1 | Output row valid |
+| out_tlast | output | 1 | High on the last (row 7) output |
+
+## Verification
+
+| Test | Description | Result |
+|------|--------------|--------|
+| softmax directed | 5 tests: spread max, dominant-clip, rail extremes (whitebox), near-uniform | 5/5 pass |
+| softmax co-sim | 1,000 random score vectors vs Python golden model | 1000/1000 pass |
+| attention directed | 5 tests: all-zero, all-ones, dominant row + negative V, back-to-back x2 | 5/5 pass |
+| attention co-sim | 500 random Q/K/V matrices, full 3-stage pipeline | 500/500 pass |
+
+All co-sim checks are bit-exact (0 tolerance) — the golden models replicate
+the exact same LUTs the RTL uses rather than comparing against true
+floating-point softmax, so any mismatch is unambiguously a bug rather than
+expected approximation error.
+
+**Bug found and fixed:** the attention directed testbench's back-to-back
+test (Test 4) caught `out_row`/`out_col` only being reset on `!rst_n`, not
+at the state transition into `WEIGHTED_SUM` like the other sweep counters —
+a second transaction in the same run started with stale terminal indices
+from the first and wrote only 1 of 128 output elements. Invisible on any
+single isolated run; only a back-to-back test surfaces it.
+
+## OpenLane SKY130 Results
+
+| Metric | Value |
+|--------|-------|
+| Core area | 1,344,254 µm² (~1.34 mm²) |
+| Logic cells | 51,830 |
+| Core utilization | 39% |
+| Setup / hold slack | +3.02 ns / +0.29 ns @ 40 ns (25 MHz) clock |
+| Target / achieved frequency | 25 MHz |
+| Total power (typical) | ~0.44 mW |
+| Routing (DRC) violations | 0 |
+| Antenna violations | 38 pin + 38 net |
+| LVS errors | 0 |
+
+Two caveats worth being upfront about, unlike the clean "0 violations"
+result on every prior rung: the target frequency had to drop from 40 MHz to
+25 MHz, because the OpenLane pass that would close 40 MHz timing
+(`GLB_RESIZER_TIMING_OPTIMIZATIONS`) segfaults on this specific netlist —
+disabling it was the only way to reach a clean signoff, trading peak
+frequency for a working flow. And antenna violations aren't fully zero;
+enabling heuristic diode insertion cut them from 402/263 to 38/38 but didn't
+finish the job. Full technical detail (a 6-iteration OpenLane config tuning
+history covering routing congestion, a resizer segfault, a timing miss, and
+an antenna gap, each root-caused in turn) is in `rung5-attention/README.md`
+and the project's `CLAUDE.md`.
+
+## How to run
+
+```bash
+make sim         # softmax directed tests
+make cosim       # softmax co-simulation (1000 vectors)
+make sim_attn    # attention.sv directed tests
+make cosim_attn  # attention.sv co-simulation (500 vectors)
+```
+
+OpenLane: `cd ~/OpenLane && make mount`, then inside the container:
+`./flow.tcl -design /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane -overwrite`
+
+## Context
+
+Rung 5 of a five-rung AI accelerator verification project. Attention is the
+mechanism that makes transformers "transformers" — directly relevant to LLM
+inference acceleration hardware, the throughline connecting every rung of
+this portfolio. UVM testbench + functional coverage for `attention.sv` is
+the one item not yet started.

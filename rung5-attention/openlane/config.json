@@ -1,0 +1,18 @@
+{
+    "DESIGN_NAME": "attention",
+    "VERILOG_FILES": [
+        "dir::../../rung1-mac-unit/rtl/mac_unit.sv",
+        "dir::../../rung3-dot-product/rtl/dot_product.sv",
+        "dir::../rtl/softmax.sv",
+        "dir::../rtl/attention.sv"
+    ],
+    "CLOCK_PORT": "clk",
+    "CLOCK_PERIOD": 40.0,
+    "FP_SIZING": "relative",
+    "FP_CORE_UTIL": 40,
+    "PL_TARGET_DENSITY": 0.45,
+    "ROUTING_CORES": 8,
+    "GRT_ADJUSTMENT": 0.2,
+    "GLB_RESIZER_TIMING_OPTIMIZATIONS": 0,
+    "RUN_HEURISTIC_DIODE_INSERTION": 1
+}

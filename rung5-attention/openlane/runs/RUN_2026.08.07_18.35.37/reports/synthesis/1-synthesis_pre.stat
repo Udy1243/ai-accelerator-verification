@@ -1,0 +1,28 @@
+
+50. Printing statistics.
+
+=== attention ===
+
+   Number of wires:              43736
+   Number of wire bits:          50988
+   Number of public wires:         764
+   Number of public wire bits:    7889
+   Number of memories:               0
+   Number of memory bits:            0
+   Number of processes:              0
+   Number of cells:              50716
+     $_ANDNOT_                   13344
+     $_AND_                       3340
+     $_DFFE_PN0P_                  486
+     $_DFFE_PP_                   7040
+     $_DFF_PN0_                      7
+     $_DFF_PN1_                      2
+     $_MUX_                       5078
+     $_NAND_                       581
+     $_NOR_                       2778
+     $_NOT_                        862
+     $_ORNOT_                     2268
+     $_OR_                        6955
+     $_XNOR_                      2851
+     $_XOR_                       5124
+

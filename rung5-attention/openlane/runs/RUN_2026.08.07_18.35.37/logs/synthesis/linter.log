@@ -1,0 +1,104 @@
+%Warning-EOFNEWLINE: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/softmax.sv:2023:10: Missing newline at end of file (POSIX 3.206).
+                                                                                                                        : ... Suggest add newline.
+ 2023 | endmodule
+      |          ^
+                     ... For warning description see https://verilator.org/warn/EOFNEWLINE?v=5.009
+                     ... Use "/* verilator lint_off EOFNEWLINE */" and lint_on around source to disable this message.
+%Warning-PINCONNECTEMPTY: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../../rung3-dot-product/rtl/dot_product.sv:119:10: Cell pin connected by name with empty reference: 'valid_out'
+  119 |         .valid_out()
+      |          ^~~~~~~~~
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/softmax.sv:1979:17: Operator ADD expects 11 bits on the RHS, but RHS's ARRAYSEL generates 8 bits.
+                                                                                                                         : ... In instance attention.u_softmax
+ 1979 |         exp_sum += exp_val[j];
+      |                 ^~
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:99:61: Operator LT expects 32 bits on the LHS, but LHS's VARREF 'sm_cycle' generates 4 bits.
+                                                                                                                         : ... In instance attention
+   99 |     assign sm_valid_in = (state == SOFTMAX_ST) && (sm_cycle < SEQ_LEN);
+      |                                                             ^
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:107:41: Operator LT expects 32 bits on the LHS, but LHS's VARREF 'sm_cycle' generates 4 bits.
+                                                                                                                          : ... In instance attention
+  107 |                 scaled_scores[(sm_cycle < SEQ_LEN) ? sm_cycle : SEQ_LEN-1][j];
+      |                                         ^
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:107:52: Operator COND expects 32 bits on the Conditional True, but Conditional True's VARREF 'sm_cycle' generates 4 bits.
+                                                                                                                          : ... In instance attention
+  107 |                 scaled_scores[(sm_cycle < SEQ_LEN) ? sm_cycle : SEQ_LEN-1][j];
+      |                                                    ^
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:149:76: Operator ASSIGN expects 9 bits on the Assign RHS, but Assign RHS's ARRAYSEL generates 8 bits.
+                                                                                                                          : ... In instance attention
+  149 |             dp2_a_flat[WEIGHTED_DATA_WIDTH*(m+1)-1 -: WEIGHTED_DATA_WIDTH] = weights[out_row][m];
+      |                                                                            ^
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:151:76: Operator ASSIGN expects 9 bits on the Assign RHS, but Assign RHS's ARRAYSEL generates 8 bits.
+                                                                                                                          : ... In instance attention
+  151 |             dp2_b_flat[WEIGHTED_DATA_WIDTH*(m+1)-1 -: WEIGHTED_DATA_WIDTH] = v[m][out_col];
+      |                                                                            ^
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:220:44: Operator EQ expects 32 bits on the LHS, but LHS's VARREF 'k_row' generates 3 bits.
+                                                                                                                          : ... In instance attention
+  220 |                         end else if (k_row == SEQ_LEN-1) begin
+      |                                            ^~
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:218:35: Operator EQ expects 32 bits on the LHS, but LHS's VARREF 'q_row' generates 3 bits.
+                                                                                                                          : ... In instance attention
+  218 |                         if (q_row == SEQ_LEN-1 && k_row == SEQ_LEN-1) begin
+      |                                   ^~
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:218:57: Operator EQ expects 32 bits on the LHS, but LHS's VARREF 'k_row' generates 3 bits.
+                                                                                                                          : ... In instance attention
+  218 |                         if (q_row == SEQ_LEN-1 && k_row == SEQ_LEN-1) begin
+      |                                                         ^~
+%Warning-WIDTHTRUNC: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:232:49: Operator ASSIGNDLY expects 18 bits on the Assign RHS, but Assign RHS's SHIFTRS generates 20 bits.
+                                                                                                                         : ... In instance attention
+  232 |                             scaled_scores[i][j] <= raw_scores[i][j] >>> 2;
+      |                                                 ^~
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:240:34: Operator LT expects 32 bits on the LHS, but LHS's VARREF 'sm_cycle' generates 4 bits.
+                                                                                                                          : ... In instance attention
+  240 |                     if (sm_cycle < SEQ_LEN) sm_cycle <= sm_cycle + 1'b1;
+      |                                  ^
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:245:38: Operator EQ expects 32 bits on the LHS, but LHS's VARREF 'sm_cycle' generates 4 bits.
+                                                                                                                          : ... In instance attention
+  245 |                         if (sm_cycle == SEQ_LEN) begin
+      |                                      ^~
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:257:51: Operator LTS expects 19 bits on the RHS, but RHS's VARREF 'OUT_MIN' generates 8 bits.
+                                                                                                                          : ... In instance attention
+  257 |                         end else if (dp2_rescaled < OUT_MIN) begin
+      |                                                   ^
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:255:42: Operator GTS expects 19 bits on the RHS, but RHS's VARREF 'OUT_MAX' generates 8 bits.
+                                                                                                                          : ... In instance attention
+  255 |                         if (dp2_rescaled > OUT_MAX) begin
+      |                                          ^
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:266:46: Operator EQ expects 32 bits on the LHS, but LHS's VARREF 'out_col' generates 4 bits.
+                                                                                                                          : ... In instance attention
+  266 |                         end else if (out_col == D_K-1) begin
+      |                                              ^~
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:263:37: Operator EQ expects 32 bits on the LHS, but LHS's VARREF 'out_row' generates 3 bits.
+                                                                                                                          : ... In instance attention
+  263 |                         if (out_row == SEQ_LEN-1 && out_col == D_K-1) begin
+      |                                     ^~
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:263:61: Operator EQ expects 32 bits on the LHS, but LHS's VARREF 'out_col' generates 4 bits.
+                                                                                                                          : ... In instance attention
+  263 |                         if (out_row == SEQ_LEN-1 && out_col == D_K-1) begin
+      |                                                             ^~
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:280:43: Operator EQ expects 32 bits on the LHS, but LHS's VARREF 'out_row' generates 3 bits.
+                                                                                                                          : ... In instance attention
+  280 |                     out_tlast <= (out_row == SEQ_LEN-1);
+      |                                           ^~
+%Warning-WIDTHEXPAND: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:281:33: Operator EQ expects 32 bits on the LHS, but LHS's VARREF 'out_row' generates 3 bits.
+                                                                                                                          : ... In instance attention
+  281 |                     if (out_row == SEQ_LEN-1) begin
+      |                                 ^~
+%Warning-UNUSEDSIGNAL: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:60:22: Signal is not used: 'dp_tready'
+                                                                                                                          : ... In instance attention
+   60 |     logic dp_tvalid, dp_tready, dp_accum_valid;
+      |                      ^~~~~~~~~
+%Warning-UNUSEDSIGNAL: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/attention.sv:138:23: Signal is not used: 'dp2_tready'
+                                                                                                                           : ... In instance attention
+  138 |     logic dp2_tvalid, dp2_tready, dp2_accum_valid;
+      |                       ^~~~~~~~~~
+%Warning-UNUSEDSIGNAL: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../../rung3-dot-product/rtl/dot_product.sv:23:17: Signal is not used: 'tlast'
+                                                                                                                                                 : ... In instance attention.u_score_dp
+   23 |     input logic tlast,
+      |                 ^~~~~
+%Warning-UNUSEDSIGNAL: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../rtl/softmax.sv:1991:30: Bits of signal are not used: 'product'[26:0]
+                                                                                                                          : ... In instance attention.u_softmax
+ 1991 |     logic [15+RECIP_WIDTH:0] product;   
+      |                              ^~~~~~~
+%Warning-CASEINCOMPLETE: /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane/../../rung3-dot-product/rtl/dot_product.sv:72:9: Case values incompletely covered (example pattern 0x3)
+   72 |         case (state)
+      |         ^~~~
