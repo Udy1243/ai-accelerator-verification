@@ -6,30 +6,40 @@ module attention #(
 )(
     input  logic clk,
     input  logic rst_n,
-    input  logic valid_in,
-    output logic valid_out,
 
-    input  logic signed [SEQ_LEN*D_K*DATA_WIDTH-1:0] q_flat,
-    input  logic signed [SEQ_LEN*D_K*DATA_WIDTH-1:0] k_flat,
-    input  logic signed [SEQ_LEN*D_K*DATA_WIDTH-1:0] v_flat,
+    // Shared load bus: loads one Q/K/V row per cycle instead of exposing the
+    // full 8x16 matrices as combinational chip pins. An earlier flat-bus
+    // version (q_flat/k_flat/v_flat/out_flat, all SEQ_LEN*D_K*DATA_WIDTH
+    // bits) needed 4100 IO pins and couldn't get through OpenLane's IO
+    // placer (max ~1308 at a cell-count-sized die) or, once the die was
+    // force-enlarged to fit them, routing (congestion from the resulting
+    // very sparse placement). This interface needs ~267 pins total.
+    // matrix_sel picks which matrix row_addr's row belongs to; load_valid
+    // is a one-cycle strobe. Loading is only honored while state==IDLE.
+    input  logic [D_K*DATA_WIDTH-1:0] row_data,
+    input  logic [2:0]                row_addr,    // 0-7
+    input  logic [1:0]                matrix_sel,  // 00=Q, 01=K, 10=V
+    input  logic                      load_valid,
+    input  logic                      start,       // begin compute once Q/K/V are loaded
 
-    output logic signed [SEQ_LEN*D_K*DATA_WIDTH-1:0] out_flat
+    // Output streams one row per cycle (push model, same valid+last shape
+    // as dot_product's own AXI-Stream tvalid/tlast, reused a third time in
+    // this file) instead of asserting the whole matrix in one cycle.
+    output logic signed [D_K*DATA_WIDTH-1:0] out_row_data,
+    output logic                              out_valid,
+    output logic                              out_tlast   // high on the last (row 7) output
 );
 
-    // Q/K rows are contiguous in q_flat/k_flat (row-major) -> sliced directly
-    // with indexed part-select where needed, no unpacked array required.
-    // V's COLUMNS (needed by WEIGHTED_SUM) are strided, not contiguous ->
-    // still need per-element access, so only v[][] gets unpacked.
+    // Q/K/V loaded one row at a time via row_data/row_addr/matrix_sel (see
+    // port comment above) -- all three are now plain unpacked arrays built
+    // by direct indexed writes during loading. No flat-bus part-select
+    // slicing needed for any of them (the earlier row-vs-column asymmetry,
+    // where only V needed an unpacked array because Q/K rows were
+    // contiguous in a flat bus, no longer applies once there's no flat bus
+    // to slice from).
+    logic signed [DATA_WIDTH-1:0] q [SEQ_LEN-1:0][D_K-1:0];
+    logic signed [DATA_WIDTH-1:0] k [SEQ_LEN-1:0][D_K-1:0];
     logic signed [DATA_WIDTH-1:0] v [SEQ_LEN-1:0][D_K-1:0];
-
-    genvar r, c;
-    generate
-        for (r = 0; r < SEQ_LEN; r++) begin : unpack_row
-            for (c = 0; c < D_K; c++) begin : unpack_col
-                assign v[r][c] = v_flat[DATA_WIDTH*(r*D_K+c+1)-1 -: DATA_WIDTH];
-            end
-        end
-    endgenerate
 
     // Q*K^T needs ACCUM_WIDTH (20b) to not overflow; after >>>2 scaling,
     // worst case shrinks by 2 bits -> SCORE_WIDTH (18b). See CLAUDE.md
@@ -37,7 +47,7 @@ module attention #(
     localparam int SCORE_WIDTH = ACCUM_WIDTH - 2;
 
     typedef enum logic [2:0] {
-        IDLE, SCORE, SCALE, SOFTMAX_ST, WEIGHTED_SUM, DONE
+        IDLE, SCORE, SCALE, SOFTMAX_ST, WEIGHTED_SUM, OUTPUT_ST
     } state_t;
     state_t state;
 
@@ -49,8 +59,17 @@ module attention #(
     // --- dot_product instance, reused for all 64 Q*K^T calls in SCORE ---
     logic dp_tvalid, dp_tready, dp_accum_valid;
     logic signed [ACCUM_WIDTH-1:0] dp_accum;
+    logic signed [D_K*DATA_WIDTH-1:0] dp_a_flat, dp_b_flat;
 
     assign dp_tvalid = (state == SCORE);
+
+    // pack this cycle's Q row / K row into dot_product's flat operand ports
+    always_comb begin
+        for (int m = 0; m < D_K; m++) begin
+            dp_a_flat[DATA_WIDTH*(m+1)-1 -: DATA_WIDTH] = q[q_row][m];
+            dp_b_flat[DATA_WIDTH*(m+1)-1 -: DATA_WIDTH] = k[k_row][m];
+        end
+    end
 
     dot_product #(
         .VECTOR_LEN(D_K),
@@ -59,8 +78,8 @@ module attention #(
     ) u_score_dp (
         .clk(clk),
         .rst_n(rst_n),
-        .a_flat(q_flat[q_row*D_K*DATA_WIDTH +: D_K*DATA_WIDTH]),
-        .b_flat(k_flat[k_row*D_K*DATA_WIDTH +: D_K*DATA_WIDTH]),
+        .a_flat(dp_a_flat),
+        .b_flat(dp_b_flat),
         .tvalid(dp_tvalid),
         .tlast(1'b1),
         .accum(dp_accum),
@@ -112,7 +131,8 @@ module attention #(
     // -> needs 19b signed (2^18-1=262143 fits, 2^17-1=131071 doesn't).
     localparam int WEIGHTED_ACCUM_WIDTH = 19;
 
-    logic [2:0] out_row;  // 0-7, sweeps weights rows
+    logic [2:0] out_row;  // 0-7: sweeps weights rows during WEIGHTED_SUM,
+                           // reused as the streaming row index during OUTPUT_ST
     logic [3:0] out_col;  // 0-15, sweeps V columns (needs 4b: 0-15 doesn't fit in 3b)
 
     logic dp2_tvalid, dp2_tready, dp2_accum_valid;
@@ -125,7 +145,7 @@ module attention #(
         for (int m = 0; m < SEQ_LEN; m++) begin
             // weights[][] is unsigned -> zero-extends automatically when
             // assigned into a wider signed slot (extension follows the
-            // SOURCE's signedness, not the destination's)
+            // SOURCE's declared signedness, not the destination's)
             dp2_a_flat[WEIGHTED_DATA_WIDTH*(m+1)-1 -: WEIGHTED_DATA_WIDTH] = weights[out_row][m];
             // v[][] is already signed -> sign-extends automatically
             dp2_b_flat[WEIGHTED_DATA_WIDTH*(m+1)-1 -: WEIGHTED_DATA_WIDTH] = v[m][out_col];
@@ -167,15 +187,29 @@ module attention #(
             sm_cycle   <= 0;
             out_row    <= 0;
             out_col    <= 0;
-            valid_out  <= 1'b0;
+            out_valid  <= 1'b0;
+            out_tlast  <= 1'b0;
         end else begin
-            valid_out <= 1'b0;  // unconditional default -- only DONE overrides it
+            out_valid <= 1'b0;  // unconditional default -- only OUTPUT_ST overrides it
+            out_tlast <= 1'b0;
 
             case (state)
                 IDLE: begin
                     q_row <= 0;
                     k_row <= 0;
-                    if (valid_in) state <= SCORE;
+                    if (load_valid) begin
+                        case (matrix_sel)
+                            2'b00: for (int m = 0; m < D_K; m++)
+                                       q[row_addr][m] <= row_data[DATA_WIDTH*(m+1)-1 -: DATA_WIDTH];
+                            2'b01: for (int m = 0; m < D_K; m++)
+                                       k[row_addr][m] <= row_data[DATA_WIDTH*(m+1)-1 -: DATA_WIDTH];
+                            2'b10: for (int m = 0; m < D_K; m++)
+                                       v[row_addr][m] <= row_data[DATA_WIDTH*(m+1)-1 -: DATA_WIDTH];
+                            default: ; // matrix_sel == 2'b11 unused
+                        endcase
+                    end else if (start) begin
+                        state <= SCORE;
+                    end
                 end
 
                 SCORE: begin
@@ -227,7 +261,8 @@ module attention #(
                         end
 
                         if (out_row == SEQ_LEN-1 && out_col == D_K-1) begin
-                            state <= DONE;
+                            out_row <= 0;  // repurposed as OUTPUT_ST's streaming row index
+                            state   <= OUTPUT_ST;
                         end else if (out_col == D_K-1) begin
                             out_col <= 0;
                             out_row <= out_row + 1'b1;
@@ -237,14 +272,17 @@ module attention #(
                     end
                 end
 
-                DONE: begin
-                    for (int i = 0; i < SEQ_LEN; i++) begin
-                        for (int j = 0; j < D_K; j++) begin
-                            out_flat[DATA_WIDTH*(i*D_K+j+1)-1 -: DATA_WIDTH] <= out[i][j];
-                        end
+                OUTPUT_ST: begin
+                    for (int m = 0; m < D_K; m++) begin
+                        out_row_data[DATA_WIDTH*(m+1)-1 -: DATA_WIDTH] <= out[out_row][m];
                     end
-                    valid_out <= 1'b1;
-                    state     <= IDLE;
+                    out_valid <= 1'b1;
+                    out_tlast <= (out_row == SEQ_LEN-1);
+                    if (out_row == SEQ_LEN-1) begin
+                        state <= IDLE;
+                    end else begin
+                        out_row <= out_row + 1'b1;
+                    end
                 end
 
                 default: state <= IDLE;
