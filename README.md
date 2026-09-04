@@ -1,4 +1,4 @@
-# Transformer Inference Accelerator — RTL Design & Verification
+# Transformer Inference Accelerator
 
 A SystemVerilog hardware project exploring the RTL design, verification, and physical implementation of low-precision transformer inference hardware.
 
