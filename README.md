@@ -1,592 +1,471 @@
-# AI Accelerator Verification
+# Transformer Inference Accelerator — RTL Design & Verification
 
-A five-rung hardware verification project implementing and verifying a
-GEAR-inspired outlier-aware INT4 quantizer and a scaled dot-product
-attention unit — the core compression and computation techniques used in
-modern LLM inference acceleration.
+A SystemVerilog hardware project exploring the RTL design, verification, and physical implementation of low-precision transformer inference hardware.
 
-| Rung | Module | Key result |
-|------|--------|------------|
-| 1 | INT8 MAC unit | 6 directed tests, Yosys INT4/INT8/INT16 comparison |
-| 2 | INT4/INT8 quantizer | 1000 random vectors, OpenLane 142MHz / 0.34mW |
-| 3 | Dot product engine | UVM 100/100, AXI-Stream, 8 parallel MACs |
-| 4 | GEAR outlier quantizer | UVM 200/200, 100% functional coverage, OpenLane |
-| 5 | Attention score unit | Directed+co-sim 1510/1510, OpenLane 25MHz / 0.44mW |
+The project builds from fundamental MAC and quantization blocks into an **8-element dot-product engine**, a **GEAR-inspired outlier-aware quantizer**, and a **scaled dot-product attention accelerator** with fixed-point softmax.
 
-**Tools:** SystemVerilog · UVM 1.2 · Yosys · OpenLane · SKY130 · Python · iverilog · Aldec Riviera-PRO
+Verification includes **Python co-simulation, UVM, SystemVerilog Assertions (SVA), functional coverage, and directed testing**, with selected RTL blocks taken through the full **OpenLane RTL-to-GDS flow on the SKY130 PDK**.
 
----
+## Highlights
 
-# Rung 1 — Parameterized INT8 MAC Unit
-
-A synthesizable multiply-accumulate unit in SystemVerilog,
-verified with a self-checking directed testbench and synthesized
-via Yosys across three precision variants.
-
-## What it does
-
-Takes two signed integer inputs, multiplies them, and accumulates
-the result into a running total. This is the fundamental compute
-primitive inside every neural network — every dot product in a
-matrix multiplication is a sequence of MAC operations.
-
-## Design
-
-| Signal     | Direction | Width          | Description                         |
-|------------|-----------|----------------|-------------------------------------|
-| clk        | input     | 1              | Clock                               |
-| rst_n      | input     | 1              | Active-low reset                    |
-| valid_in   | input     | 1              | Accumulate when high                |
-| a, b       | input     | INPUT_WIDTH    | Signed operands                     |
-| clear      | input     | 1              | Reset accumulator to zero           |
-| accum_out  | output    | ACCUM_WIDTH    | Running total                       |
-| valid_out  | output    | 1              | High after first valid accumulation |
-
-## Verification
-
-Six directed tests covering:
-
-| Test | Description | Expected |
-|------|-------------|----------|
-| 1 | Basic accumulation 3×4 + 2×5 | 22 |
-| 2 | Clear resets accumulator | 1 |
-| 3 | Negative input -4×3 | -12 |
-| 4 | Max negative squared -128×-128 | 16384 |
-| 5 | 16x accumulation of 2×3 | 96 |
-| 6 | 128x accumulation of 127×127 | 2,064,512 |
-
-All six tests pass. The overflow test (Test 6) validates that a
-32-bit accumulator correctly holds the result of 128 accumulated
-multiplications without wrapping.
-
-## Synthesis Results (Yosys)
-
-| Variant | Input Width | Accum Width | Total Cells | Flip Flops | XOR Gates |
-|---------|-------------|-------------|-------------|------------|-----------|
-| INT4    | 4-bit       | 32-bit      | 786         | 33         | 183       |
-| INT8    | 8-bit       | 32-bit      | 1,137       | 33         | 287       |
-| INT16   | 16-bit      | 64-bit      | 3,493       | 65         | 887       |
-
-**Key insight:** Cell count scales roughly with N² as input width
-doubles — going from INT8 to INT16 costs 3× more gates almost
-entirely in the multiplier logic. Flip flop count is determined
-by ACCUM_WIDTH, not INPUT_WIDTH — changing input precision changes
-compute logic but not storage.
-
-## How to run
-
-```bash
-make sim    # compile and simulate
-make synth  # synthesize with Yosys
-make waves  # open GTKWave waveform viewer
-make clean  # remove build artifacts
-```
-
-## Context
-
-This MAC unit is Rung 1 of a four-rung AI accelerator verification
-project building toward a GEAR-inspired outlier-aware INT4
-quantizer with a full UVM testbench and OpenLane synthesis on
-SKY130. The MAC unit is the compute primitive that all subsequent
-rungs build on top of.
-
----
-
-# Rung 2 — Parameterized INT4/INT8 Quantizer
-
-A synthesizable quantizer in SystemVerilog that compresses
-16-bit signed integers to INT4 or INT8, verified with directed
-tests and 1,000 constrained-random vectors against a Python
-co-simulation reference model, and synthesized through the full
-RTL-to-GDS flow on SKY130 via OpenLane.
-
-## What it does
-
-Takes a 16-bit signed input and a scale factor, multiplies them,
-applies configurable rounding (truncation or round-to-nearest),
-saturates the result to the output range, and outputs a compressed
-integer. This is the compression step that reduces neural network
-weight storage from 16-bit to 4-bit or 8-bit.
-
-## Design
-
-| Signal      | Direction | Width        | Description                         |
-|-------------|-----------|--------------|-------------------------------------|
-| clk         | input     | 1            | Clock                               |
-| rst_n       | input     | 1            | Active-low reset                    |
-| valid_in    | input     | 1            | Input data valid                    |
-| data_in     | input     | INPUT_WIDTH  | Raw value to quantize (signed)      |
-| scale       | input     | 8            | Scale factor (unsigned)             |
-| round_mode  | input     | 1            | 0=truncate, 1=round-to-nearest      |
-| data_out    | output    | OUTPUT_WIDTH | Quantized result (signed)           |
-| overflow    | output    | 1            | High if saturation occurred         |
-| valid_out   | output    | 1            | Output valid                        |
-
-## Pipeline stages
-
-```
-data_in × scale → [ROUND] → [SATURATE] → [REGISTER] → data_out
-```
-
-## Verification
-
-| Test | Description | Expected |
-|------|-------------|----------|
-| 1 | Normal: 5×3, truncate | 15, no overflow |
-| 2 | Saturation: 32767×255 | 127, overflow=1 |
-| 3 | Negative: -30×3 | -90, no overflow |
-| 4 | Rounding: 10×3, round mode | 31, no overflow |
-| + | 1,000 constrained-random vectors vs Python golden model | 0 failures |
-
-**Co-simulation methodology:** Python reference model generates
-random test vectors and expected outputs. SV testbench reads
-golden.txt and compares every output — 700 saturation cases
-and 300 non-saturating cases for balanced coverage.
-
-## OpenLane SKY130 Results
-
-| Metric | Value |
-|--------|-------|
-| Core area | 33,344 µm² |
-| Logic cells | 830 |
-| Critical path | 7.05 ns |
-| Max frequency | 142 MHz |
-| Target frequency | 40 MHz |
-| Timing slack | +17.95 ns |
-| Total power (typical) | ~0.34 mW |
-| Routing violations | 0 |
-| LVS errors | 0 |
-
-## How to run
-
-```bash
-python3 tb/generate_vectors.py   # generate golden vectors
-make sim                          # simulate + check 1004 vectors
-make synth                        # quick Yosys gate count
-```
-
-## Context
-
-Rung 2 of a four-rung AI accelerator verification project.
-The quantizer compresses the MAC unit outputs from Rung 1
-before storage — reducing memory bandwidth by 2-4x while
-the saturation and rounding logic controls accuracy loss.
-
----
-
-# Rung 3 — Dot Product Engine with UVM Verification
-
-A pipelined 8-element dot product engine in SystemVerilog, verified
-with a complete UVM testbench running 100 constrained-random transactions
-through a self-checking scoreboard. Synthesized via Yosys with 8 parallel
-MAC unit instances.
-
-## What it does
-
-Computes the dot product of two INT4 input vectors of length 8:
-
-```
-result = a[0]*b[0] + a[1]*b[1] + ... + a[7]*b[7]
-```
-
-This is the core operation inside every neural network layer — each
-neuron's activation is a dot product of its inputs against its weights.
-The engine uses an AXI-Stream interface for data transfer and a
-3-state FSM to sequence the computation.
+* Designed a multi-block transformer inference pipeline in SystemVerilog
+* Implemented parameterized **INT4 / INT8 / INT16 MAC hardware**
+* Built an **INT4 / INT8 quantizer** with rounding and saturation
+* Designed an **8-element AXI-Stream dot-product engine**
+* Implemented a **GEAR-inspired outlier-aware INT4 quantizer**
+* Built a scaled dot-product **attention unit with fixed-point softmax**
+* Developed reusable **UVM verification environments**
+* Added concurrent **SystemVerilog Assertions using `bind`**
+* Verified **1,000 / 1,000 Python co-simulation vectors**
+* Verified **200 / 200 UVM transactions** for the GEAR quantizer
+* Achieved **100% functional coverage across 7 covergroups** for the verified GEAR environment
+* Completed **RTL-to-GDS using OpenLane + SKY130** for selected blocks
 
 ## Architecture
 
-```
-AXI-Stream input
-(tvalid/tready/tlast)
-        │
-        ▼
-  ┌─────────────┐
-  │  FSM        │  IDLE → COMPUTE → DONE
-  │  Controller │  tready high in IDLE
-  └──────┬──────┘
-         │ valid_in / clear
-         ▼
-  ┌──────────────────────────────────────┐
-  │  MAC Array (8 parallel instances)    │
-  │  mac[0] mac[1] mac[2] ... mac[7]     │
-  │  each: INPUT_WIDTH=4, ACCUM_WIDTH=8  │
-  └──────────────┬───────────────────────┘
-                 │ mac_out[0..7]
-                 ▼
-          ┌─────────────┐
-          │ always_comb  │  sum all 8 outputs
-          │  summation   │
-          └──────┬───────┘
-                 │
-                 ▼
-           accum[10:0]  +  accum_valid
-```
+The project was developed incrementally, with each stage introducing a new RTL or verification concept.
 
-### FSM states
+| Stage | Module                | Focus                                                |
+| ----- | --------------------- | ---------------------------------------------------- |
+| 1     | Parameterized MAC     | Signed arithmetic, accumulation, parameterization    |
+| 2     | INT4 / INT8 Quantizer | Fixed-point arithmetic, rounding, saturation         |
+| 3     | Dot Product Engine    | Parallel MAC array, AXI-Stream, FSM control          |
+| 4     | GEAR Quantizer        | Outlier-aware quantization, UVM, coverage, SVA       |
+| 5     | Attention Accelerator | QKᵀ computation, scaling, softmax, attention control |
 
-| State | Description |
-|-------|-------------|
-| IDLE | tready=1, clear_mac=1, waiting for tvalid |
-| COMPUTE | valid_in_mac=1, MACs accumulate for one cycle |
-| DONE | accum_valid=1, result stable, returns to IDLE |
+### Dataflow
 
-## Parameters
+`Q / K Inputs → Dot Product → Scaling → Softmax → Attention Output`
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| VECTOR_LEN | 8 | Number of MAC units |
-| DATA_WIDTH | 4 | Input bit width (INT4) |
-| ACCUM_WIDTH | 11 | Output accumulator width |
-
-Accumulator width of 11 bits handles the worst case:
-8 × (7 × 7) = 392 and 8 × ((-8) × (-8)) = 512 — both fit in 11 bits signed.
-
-## Ports
-
-| Signal | Direction | Width | Description |
-|--------|-----------|-------|-------------|
-| clk | input | 1 | Clock |
-| rst_n | input | 1 | Active-low reset |
-| a_flat | input | DATA_WIDTH×VECTOR_LEN | Flattened vector A |
-| b_flat | input | DATA_WIDTH×VECTOR_LEN | Flattened vector B |
-| tvalid | input | 1 | AXI-Stream input valid |
-| tlast | input | 1 | AXI-Stream last beat |
-| tready | output | 1 | AXI-Stream ready |
-| accum | output | ACCUM_WIDTH | Dot product result |
-| accum_valid | output | 1 | Result is valid this cycle |
-
-Ports use flattened packed vectors (`a_flat`, `b_flat`) for Yosys
-synthesis compatibility. The RTL unpacks them internally via a
-generate block.
-
-## Verification
-
-### Directed testbench (7 tests)
-
-| Test | Description | Expected |
-|------|-------------|----------|
-| all_zeroes | All inputs zero | 0 |
-| identity_elem_0 | a[0]=1, b[0]=1, rest zero | 1 |
-| identity_elem_7 | a[7]=1, b[7]=1, rest zero | 1 |
-| all_max_pos | All a=7, b=7 | 392 |
-| max_neg_x_max_pos | All a=-8, b=7 | -448 |
-| max_neg_x_max_neg | All a=-8, b=-8 | 512 |
-| alternating_signs | a alternates 7/-8, b=1 | -4 |
-
-All 7 directed tests pass.
-
-### UVM testbench (100 constrained-random transactions)
-
-Full UVM 1.2 environment running on Aldec Riviera-PRO:
-
-```
-uvm_sequence
-    generates 100 random transactions
-         │
-         ▼
-uvm_sequencer
-         │
-         ▼
-uvm_driver
-    drives AXI-Stream handshake
-    holds inputs stable until accum_valid
-         │
-         ▼
-    [DUT]
-         │
-         ▼
-uvm_monitor
-    captures inputs + result when accum_valid fires
-         │
-         ▼
-uvm_scoreboard
-    recomputes expected from captured inputs
-    compares against actual output
-```
-
-**Results: 100 passed, 0 failed**
-
-Key implementation decisions:
-
-- Driver waits for `accum_valid` before calling `item_done()` — prevents
-  the driver loading the next transaction's inputs before the monitor
-  captures the current result
-- Monitor captures `a_flat`, `b_flat`, and `accum` atomically when
-  `accum_valid` fires — avoids stale-input mismatches
-- Scoreboard recomputes expected value from captured inputs using the same
-  slicing logic as the DUT — independent verification of the hardware math
-- Clocking blocks with `#1step` input sampling and `#1` output delay
-  eliminate race conditions throughout
-
-## Synthesis Results (Yosys)
-
-```
-Design hierarchy total:
-  Total cells:    1,598
-  Flip flops:        76
-  XOR gates:        442
-  MAC instances:      8
-
-Per MAC unit (INT4, ACCUM_WIDTH=8):
-  Cells:   159
-  FFs:       9
-
-Dot product controller:
-  Cells:   334
-  FFs:       4  (2-bit state + accum_valid + 1 misc)
-```
-
-**Key insight:** 8 MAC units × 159 cells = 1,272 cells for the compute
-array. The FSM and summation add only 334 cells — the compute logic
-dominates as expected for an arithmetic accelerator.
-
-## How to run
-
-```bash
-# Directed testbench (iverilog)
-make sim
-
-# Synthesis gate count (Yosys)
-make synth
-
-# Waveforms (GTKWave)
-make waves
-```
-
-UVM testbench runs on [EDA Playground](https://edaplayground.com) with
-UVM 1.2 and Aldec Riviera-PRO — paste `tb/uvm/testbench.sv` into the
-testbench panel and `rtl/mac_unit.sv` + `rtl/dot_product.sv` into the
-design panel.
-
-## Context
-
-Rung 3 of a four-rung AI accelerator verification project. The dot product
-engine builds on the INT8 MAC unit from Rung 1 and feeds into the
-GEAR-inspired outlier quantizer in Rung 4. The UVM environment established
-here — driver, monitor, scoreboard, clocking blocks — scales directly to
-the full UVM testbench in Rung 4.
+Supporting blocks provide quantization and outlier-aware compression for low-precision inference.
 
 ---
 
-# Rung 4 — GEAR-Inspired Outlier-Aware INT4 Quantizer
+## Stage 1 — Parameterized MAC Unit
 
-A SystemVerilog quantizer that detects per-value outliers against a
-configurable threshold and routes them to a full-precision INT8 sideband
-path instead of quantizing them to INT4, preserving accuracy on the values
-that matter most.
+A synthesizable multiply-accumulate unit supporting configurable input and accumulator widths.
 
-## What it does
+### Features
 
-Standard INT4 quantization fails on outliers — values much larger than
-the rest of a block force a large scale factor that crushes the precision
-of normal values. The GEAR approach detects outliers and handles them
-separately:
+* Signed multiplication and accumulation
+* Parameterized INT4, INT8, and INT16 configurations
+* Active-low reset
+* Accumulator clear control
+* Valid input/output signaling
 
-```
-if abs(data_in) > threshold:
-    is_outlier   = 1
-    sideband_out = data_in   ← full INT8 precision preserved
-    int4_out     = 0
+### Verification
 
-else:
-    is_outlier   = 0
-    sideband_out = 0
-    int4_out     = clip(scale_and_round(data_in), -8, 7)
-```
+Directed tests cover:
 
-The downstream consumer reads `is_outlier` to decide which output to use.
-Normal values get good INT4 precision because the scale factor is no longer
-distorted by outliers. Outlier values are preserved exactly in the sideband.
+* Positive accumulation
+* Negative operands
+* Maximum positive and negative values
+* Accumulator clearing
+* Long accumulation sequences
+* Overflow-sensitive cases
 
-## Design
+### Yosys Synthesis
 
-| Signal | Direction | Width | Description |
-|--------|-----------|-------|-------------|
-| clk | input | 1 | Clock |
-| rst_n | input | 1 | Active-low reset |
-| valid_in | input | 1 | Input data valid |
-| data_in | input | 8 | Signed input value |
-| threshold | input | 8 | Outlier detection threshold |
-| scale | input | 4 | Fixed-point scale factor (Q0.4: value/16) |
-| round_mode | input | 1 | 0=truncate, 1=round-to-nearest |
-| valid_out | output | 1 | Output valid |
-| is_outlier | output | 1 | High if value exceeded threshold |
-| int4_out | output | 4 | INT4 quantized result (0 if outlier) |
-| sideband_out | output | 8 | Original value in sideband (0 if normal) |
+| Configuration | Total Cells |
+| ------------- | ----------: |
+| INT4          |         786 |
+| INT8          |       1,137 |
+| INT16         |       3,493 |
 
-## Verification
-
-| Test | Description | Result |
-|------|-------------|--------|
-| 1–6 | Directed: normal quantization, positive/negative outlier, boundary, scale=0, negative normal | 6/6 pass |
-| 7–10 | Directed: round_mode changes result, round-then-clip saturation | 4/4 pass |
-| + | 1,000 random vectors vs Python golden model | 0 failures |
-| + | UVM: 200 constrained-random transactions on Aldec Riviera-PRO | 200/200 pass |
-| + | Functional coverage: 7 covergroups | 100% all bins |
-
-### Functional coverage model (7 covergroups)
-
-| Covergroup | Bins covered |
-|------------|-------------|
-| Normal path | small, medium, large values |
-| Outlier path | positive outlier, negative outlier |
-| Threshold boundary | exactly at threshold, one above |
-| Round mode | truncate, round-to-nearest |
-| Scale range | min scale, mid scale, max scale |
-| Overflow after rounding | round-up triggering saturation |
-| Reset behavior | valid_out cleared on rst_n |
-
-## OpenLane SKY130 Results
-
-| Metric | Value |
-|--------|-------|
-| Core area | 6,313.6 µm² |
-| Logic cells | 253 |
-| Core utilization | 43.0% |
-| Critical path | 13.19 ns |
-| Max frequency | ~75.8 MHz |
-| Target frequency | 40 MHz |
-| Timing slack | +11.81 ns |
-| Total power (typical) | ~0.136 mW |
-| Routing violations | 0 |
-| LVS errors | 0 |
-
-**Note:** The rounding adder reduced max frequency from ~258 MHz to
-~75.8 MHz despite adding only 20 cells — carry propagation through an
-adder scales with bit width in a way a MUX's delay does not. The design
-still comfortably meets the 40 MHz target with +11.81 ns of slack.
-
-## How to run
-
-```bash
-python3 tb/generate_vectors.py   # generate golden vectors
-make cosim                        # simulate + check 1000 vectors
-make synth                        # quick Yosys gate count
-```
-
-OpenLane: `cd ~/OpenLane && make mount`, then inside the container:
-`./flow.tcl -design <path-to>/rung4-gear-quantizer/openlane -overwrite`
-
-## Context
-
-Rung 4 is the culmination of the full project — implementing the core
-insight from the GEAR paper in synthesizable RTL, verified with a
-complete UVM 1.2 environment and 100% functional coverage across 7
-covergroups. The outlier detection and sideband routing logic is the
-key technique that makes aggressive INT4 quantization viable for
-production LLM inference without catastrophic accuracy loss.
+The synthesis results demonstrate the hardware cost of increasing arithmetic precision, particularly inside multiplier logic.
 
 ---
 
-# Rung 5 — Attention Score Unit
+## Stage 2 — INT4 / INT8 Quantizer
 
-Scaled dot-product attention (`Q × Kᵀ → scale → softmax → × V`) in
-SystemVerilog — the core computation inside every transformer layer —
-verified with directed testbenches and Python co-simulation, and
-synthesized through the full RTL-to-GDS flow on SKY130 via OpenLane.
+A configurable quantization block that converts signed 16-bit values into lower-precision integer representations.
 
-## What it does
+### Datapath
 
+`Input × Scale → Round → Saturate → Register → Quantized Output`
+
+### Features
+
+* INT4 / INT8 output modes
+* Truncation and round-to-nearest
+* Saturation detection
+* Fixed-point scaling
+* Valid input/output signaling
+
+### Verification
+
+A Python golden model generates randomized inputs and expected results.
+
+**Result: 1,000 / 1,000 randomized vectors passed**
+
+The test distribution includes both saturating and non-saturating cases to exercise the full quantizer range.
+
+### OpenLane / SKY130
+
+| Metric                  |     Result |
+| ----------------------- | ---------: |
+| Core Area               | 33,344 µm² |
+| Logic Cells             |        830 |
+| Critical Path           |    7.05 ns |
+| Estimated Max Frequency |    142 MHz |
+| Total Power             |   ~0.34 mW |
+| Routing Violations      |          0 |
+| LVS Errors              |          0 |
+
+---
+
+## Stage 3 — AXI-Stream Dot Product Engine
+
+An 8-element INT4 dot-product accelerator built using eight parallel MAC units.
+
+The engine computes:
+
+`result = Σ a[i] × b[i]`
+
+for two 8-element input vectors.
+
+### Architecture
+
+`AXI-Stream Input → FSM Controller → 8 Parallel MACs → Summation → Output`
+
+### Features
+
+* 8 parallel MAC instances
+* INT4 input operands
+* AXI-Stream-style `tvalid`, `tready`, and `tlast` interface
+* 3-state controller:
+
+  * `IDLE`
+  * `COMPUTE`
+  * `DONE`
+* Parameterized vector and data widths
+
+### Verification
+
+Directed tests cover:
+
+* Zero vectors
+* Identity cases
+* Maximum positive values
+* Maximum negative values
+* Mixed signs
+* Alternating signs
+
+A UVM environment was also developed containing:
+
+* Sequence
+* Sequencer
+* Driver
+* Monitor
+* Scoreboard
+* Environment
+* Test
+
+The scoreboard independently recomputes the expected dot product and compares it against the DUT output.
+
+Clocking blocks are used to prevent race conditions between the DUT and verification environment.
+
+### Yosys Synthesis
+
+* **1,598 total cells**
+* **8 parallel MAC instances**
+* **76 flip-flops**
+* **442 XOR gates**
+
+The MAC array dominates the area, as expected for an arithmetic accelerator.
+
+---
+
+## Stage 4 — GEAR-Inspired Outlier-Aware Quantizer
+
+A hardware implementation inspired by the outlier-handling concepts used in GEAR-style quantization.
+
+Standard low-bit quantization can lose significant precision when a small number of values are much larger than the rest of the tensor.
+
+This design separates those values into a higher-precision sideband path.
+
+### Concept
+
+For each input:
+
+* If the magnitude exceeds the configured threshold:
+
+  * Mark it as an outlier
+  * Preserve the value on an INT8 sideband
+* Otherwise:
+
+  * Quantize the value to INT4
+
+Conceptually:
+
+`Normal Values → INT4`
+
+`Outliers → INT8 Sideband`
+
+This allows most data to remain low precision without forcing extreme values into the same INT4 range.
+
+### UVM Verification
+
+A full UVM environment was developed with:
+
+* Transaction class
+* Sequence
+* Sequencer
+* Driver
+* Monitor
+* Scoreboard
+* Coverage collector
+* Environment
+
+### Results
+
+* **200 / 200 UVM transactions passed**
+* **100% functional coverage**
+* **7 functional covergroups**
+* Concurrent SVA assertions integrated using `bind`
+
+Coverage targets include:
+
+* Positive and negative inputs
+* Outlier / non-outlier behavior
+* Threshold boundaries
+* Rounding modes
+* Saturation behavior
+* Cross coverage between major operating conditions
+
+The verification process also exposed a real bug in the coverage collector, which was root-caused and corrected.
+
+### OpenLane / SKY130
+
+| Metric                  |    Result |
+| ----------------------- | --------: |
+| Standard Cells          |       253 |
+| Area                    | 6,314 µm² |
+| Estimated Max Frequency |  75.8 MHz |
+| Total Power             |  ~0.14 mW |
+| DRC Violations          |         0 |
+| LVS Violations          |         0 |
+
+Generated physical-design artifacts include:
+
+* GDS
+* LEF
+* SPICE netlist
+* Gate-level netlist
+
+---
+
+## Stage 5 — Scaled Dot-Product Attention
+
+The final stage extends the project from individual arithmetic blocks into a transformer attention datapath.
+
+Scaled dot-product attention follows:
+
+`Attention(Q,K,V) = softmax(QKᵀ / √dₖ)V`
+
+The current RTL focuses on the hardware control and arithmetic required to compute attention scores.
+
+### Major Components
+
+* Dot-product computation
+* Fixed scaling
+* Numerically stable softmax
+* Exponential lookup table
+* Fixed-point probability representation
+* Multi-state FSM control
+
+### Softmax
+
+Rather than implementing floating-point exponentials directly in hardware, the design uses a lookup-table-based approximation and fixed-point arithmetic.
+
+The output uses a fixed-point representation suitable for downstream hardware.
+
+### Verification
+
+The attention block has been exercised using directed testing and Python-based reference-model comparison.
+
+A UVM environment and functional coverage infrastructure have also been written for this stage and are maintained separately from the completed GEAR UVM results above.
+
+---
+
+## Verification Strategy
+
+This project intentionally uses multiple verification techniques rather than relying on a single testbench methodology.
+
+### Directed Testing
+
+Used for:
+
+* Basic arithmetic correctness
+* Boundary conditions
+* FSM behavior
+* Reset behavior
+* Known corner cases
+
+### Python Co-Simulation
+
+Python acts as a software golden model for mathematical blocks such as quantization and attention calculations.
+
+This provides an implementation-independent reference against which the RTL can be checked.
+
+### UVM
+
+UVM environments exercise the RTL with reusable transaction-level verification components.
+
+Key components include:
+
+`Sequence → Sequencer → Driver → DUT → Monitor → Scoreboard`
+
+Functional coverage tracks whether important input spaces and operating conditions have actually been exercised.
+
+### SystemVerilog Assertions
+
+Concurrent SVA properties check protocol and temporal behavior that is difficult to verify through output comparison alone.
+
+Assertions are connected using `bind` so verification properties remain separated from synthesizable RTL.
+
+---
+
+## Physical Design
+
+Selected blocks were taken beyond RTL synthesis through the complete OpenLane ASIC flow.
+
+`SystemVerilog RTL`
+
+`↓`
+
+`Yosys Synthesis`
+
+`↓`
+
+`Floorplanning`
+
+`↓`
+
+`Placement`
+
+`↓`
+
+`Clock Tree Synthesis`
+
+`↓`
+
+`Routing`
+
+`↓`
+
+`DRC / LVS`
+
+`↓`
+
+`GDSII`
+
+Technology:
+
+**SkyWater SKY130**
+
+The goal of this portion of the project was to connect RTL design decisions with physical consequences including:
+
+* Cell count
+* Area
+* Timing
+* Power
+* Routing
+* Physical verification
+
+---
+
+## Repository Structure
+
+```text
+ai-accelerator-verification/
+│
+├── rung0-toolchain/
+├── rung1-mac-unit/
+├── rung2-quantizer/
+├── rung3-dot-product/
+├── rung4-gear-quantizer/
+└── rung5-attention/
 ```
-scores  = Q × Kᵀ                    # [8,16] × [16,8] -> [8,8] (d_k cancels out)
-scaled  = scores >>> 2              # ÷ √d_k = ÷4
-weights = softmax(scaled)           # row-wise, numerically stable
-output  = weights × V               # [8,8] × [8,16] -> [8,16]
-```
 
-Two modules: `softmax.sv`, an 8-input numerically-stable softmax (subtracts
-the row max before exponentiating, looks up `exp()` via a LUT, normalizes
-via reciprocal-multiply instead of a real divider); and `attention.sv`, a
-6-state FSM that wires `softmax` together with two reused instances of
-Rung 3's `dot_product` (once for `Q·Kᵀ`, once for `weights·V`) to compute
-full attention over an 8-token, 16-dim sequence.
+Each stage contains its own combination of:
 
-## Design
+* `rtl/` — synthesizable SystemVerilog
+* `tb/` — testbench / verification code
+* `openlane/` — physical-design configuration and results
+* `Makefile` — simulation and synthesis commands
+* `README.md` — module-specific documentation
 
-`attention.sv` loads Q/K/V one row at a time over a shared 267-pin bus
-(`row_data`/`row_addr`/`matrix_sel`/`load_valid`) instead of exposing the
-full matrices as combinational chip pins, and streams output back the same
-way (`out_row_data`/`out_valid`/`out_tlast`). An earlier flat-bus version
-needed 4,100 pins and couldn't fit through OpenLane's IO placer — this is
-the standard way real accelerators load large matrices, since pins/wires
-are physically expensive and clock cycles are nearly free by comparison.
+---
 
-| Signal | Direction | Width | Description |
-|--------|-----------|-------|--------------|
-| clk, rst_n | input | 1 | Clock, active-low reset |
-| row_data | input | 128 | One Q/K/V row |
-| row_addr | input | 3 | Row index (0-7) |
-| matrix_sel | input | 2 | 00=Q, 01=K, 10=V |
-| load_valid | input | 1 | One-cycle load strobe |
-| start | input | 1 | Begin compute once loaded |
-| out_row_data | output | 128 (signed) | One output row |
-| out_valid | output | 1 | Output row valid |
-| out_tlast | output | 1 | High on the last (row 7) output |
+## Tools & Technologies
 
-## Verification
+### RTL & Verification
 
-| Test | Description | Result |
-|------|--------------|--------|
-| softmax directed | 5 tests: spread max, dominant-clip, rail extremes (whitebox), near-uniform | 5/5 pass |
-| softmax co-sim | 1,000 random score vectors vs Python golden model | 1000/1000 pass |
-| attention directed | 5 tests: all-zero, all-ones, dominant row + negative V, back-to-back x2 | 5/5 pass |
-| attention co-sim | 500 random Q/K/V matrices, full 3-stage pipeline | 500/500 pass |
+* SystemVerilog
+* UVM 1.2
+* SystemVerilog Assertions
+* Functional Coverage
+* AXI-Stream
+* Python reference models
 
-All co-sim checks are bit-exact (0 tolerance) — the golden models replicate
-the exact same LUTs the RTL uses rather than comparing against true
-floating-point softmax, so any mismatch is unambiguously a bug rather than
-expected approximation error.
+### Simulation
 
-**Bug found and fixed:** the attention directed testbench's back-to-back
-test (Test 4) caught `out_row`/`out_col` only being reset on `!rst_n`, not
-at the state transition into `WEIGHTED_SUM` like the other sweep counters —
-a second transaction in the same run started with stale terminal indices
-from the first and wrote only 1 of 128 output elements. Invisible on any
-single isolated run; only a back-to-back test surfaces it.
+* iverilog
+* Aldec Riviera-PRO
+* GTKWave
 
-## OpenLane SKY130 Results
+### Synthesis & ASIC Flow
 
-| Metric | Value |
-|--------|-------|
-| Core area | 1,344,254 µm² (~1.34 mm²) |
-| Logic cells | 51,830 |
-| Core utilization | 39% |
-| Setup / hold slack | +3.02 ns / +0.29 ns @ 40 ns (25 MHz) clock |
-| Target / achieved frequency | 25 MHz |
-| Total power (typical) | ~0.44 mW |
-| Routing (DRC) violations | 0 |
-| Antenna violations | 38 pin + 38 net |
-| LVS errors | 0 |
+* Yosys
+* OpenLane
+* SKY130 PDK
 
-Two caveats worth being upfront about, unlike the clean "0 violations"
-result on every prior rung: the target frequency had to drop from 40 MHz to
-25 MHz, because the OpenLane pass that would close 40 MHz timing
-(`GLB_RESIZER_TIMING_OPTIMIZATIONS`) segfaults on this specific netlist —
-disabling it was the only way to reach a clean signoff, trading peak
-frequency for a working flow. And antenna violations aren't fully zero;
-enabling heuristic diode insertion cut them from 402/263 to 38/38 but didn't
-finish the job. Full technical detail (a 6-iteration OpenLane config tuning
-history covering routing congestion, a resizer segfault, a timing miss, and
-an antenna gap, each root-caused in turn) is in `rung5-attention/README.md`
-and the project's `CLAUDE.md`.
+### Programming
 
-## How to run
+* Python
+* Make
+* Shell / Linux
 
-```bash
-make sim         # softmax directed tests
-make cosim       # softmax co-simulation (1000 vectors)
-make sim_attn    # attention.sv directed tests
-make cosim_attn  # attention.sv co-simulation (500 vectors)
-```
+---
 
-OpenLane: `cd ~/OpenLane && make mount`, then inside the container:
-`./flow.tcl -design /home/ugunt/projects/ai-accelerator-verification/rung5-attention/openlane -overwrite`
+## What I Learned
 
-## Context
+This project was built to explore the complete digital hardware development loop:
 
-Rung 5 of a five-rung AI accelerator verification project. Attention is the
-mechanism that makes transformers "transformers" — directly relevant to LLM
-inference acceleration hardware, the throughline connecting every rung of
-this portfolio. UVM testbench + functional coverage for `attention.sv` is
-the one item not yet started.
+`Algorithm → Architecture → RTL → Verification → Synthesis → Physical Design`
+
+The most important takeaway was that correct RTL is only one part of hardware design.
+
+Building UVM scoreboards, debugging timing between drivers and monitors, measuring functional coverage, writing assertions, and taking blocks through physical implementation exposed issues and tradeoffs that are not visible from behavioral simulation alone.
+
+The project also provided experience translating machine-learning concepts such as quantization, outlier handling, dot products, and softmax into synthesizable fixed-point hardware.
+
+---
+
+## Project Status
+
+* [x] Parameterized MAC
+* [x] INT4 / INT8 quantizer
+* [x] Python co-simulation
+* [x] AXI-Stream dot-product engine
+* [x] Dot-product UVM environment
+* [x] GEAR-inspired outlier-aware quantizer
+* [x] GEAR UVM verification
+* [x] Functional coverage
+* [x] SystemVerilog Assertions
+* [x] OpenLane RTL-to-GDS
+* [x] Scaled dot-product attention RTL
+* [x] Attention reference-model testing
+* [x] Attention UVM infrastructure
+* [ ] Additional attention-level UVM regression and coverage closure
+
+---
+
+## Author
+
+**Uday Gunturu**
+Electrical & Computer Engineering
+The University of Texas at Austin
+
+Interested in **RTL Design, Design Verification, Computer Architecture, and AI Hardware Acceleration**.
